@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Navbar from './components/shared/Navbar'
 import Login from './components/auth/Login'
 import Signup from './components/auth/Signup'
 import Home from './components/Home'
@@ -16,6 +15,7 @@ import Applicants from './components/admin/Applicants'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import PlatformOverview from './components/PlatformOverview';
 import JobApplicationForm from './components/JobApplicationForm';
+
 
 const appRouter = createBrowserRouter([
   {
@@ -85,7 +85,9 @@ function App() {
 
   return (
     <div>
+     
       <RouterProvider router={appRouter} />
+      
     </div>
   )
 }
