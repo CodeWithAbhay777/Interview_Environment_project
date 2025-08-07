@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import Navbar from '../shared/Navbar'
-import { Input } from '../ui/input'
-import { Button } from '../ui/button' 
+import Navbar from '../components/shared/Navbar';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button'; 
 import { useNavigate } from 'react-router-dom' 
 import { useDispatch } from 'react-redux' 
-import AdminJobsTable from './AdminJobsTable'
+import AdminJobsTable from '../components/admin/AdminJobsTable';
 import useGetAllAdminJobs from '@/hooks/useGetAllAdminJobs'
 import { setSearchJobByText } from '@/redux/jobSlice'
 
@@ -19,7 +19,7 @@ const AdminJobs = () => {
   }, [input]);
   return (
     <div>
-      <Navbar />
+    
       <div className='max-w-6xl mx-auto my-10'>
         <div className='flex items-center justify-between my-5'>
           <Input

@@ -29,7 +29,7 @@ const Navbar = () => {
         }
     }
     return (
-        <div className='bg-white'>
+        <div className='bg-white fixed top-0 left-0 right-0 z-50 shadow-md  '>
             <div className='flex items-center justify-between mx-auto max-w-7xl h-16'>
                 <div>
                     <h1 className='text-2xl font-bold'>Jobify<span className='text-[#6A38C2]'>.AI</span></h1>
