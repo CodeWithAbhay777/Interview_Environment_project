@@ -1,16 +1,17 @@
 import mongoose from "mongoose";
 
-const profileSchema = mongoose.Schema({
+const candidateProfileSchema = mongoose.Schema({
 
     user_id:{
         type:mongoose.Schema.Types.ObjectId,
         ref : 'userModel',
-        required:true 
+        required:true ,
+        unique: true,
     },
 
-    fullname:{
-        type:String,
-        required : true
+    fullname: {
+      type: String,
+      required: true,
     },
     
     phone :{
@@ -18,7 +19,8 @@ const profileSchema = mongoose.Schema({
         required : true
     },
     address : {
-        type : String
+        type : String,
+        required : true
     },
     college : {
         type : String
@@ -40,9 +42,20 @@ const profileSchema = mongoose.Schema({
     profilePhoto : {
         type : String,
         default: "",
-    }
-});
+    },
+    linkedInProfile : {
+        type : String,
+        default: "",
+    },
+    githubProfile : {
+        type : String,
+        default: "",
+    },
+    
 
-const profileModel = mongoose.model("profileModel", profileSchema);
 
-export default profileModel;
+},{timestamps: true});
+
+const CandidateProfileModel = mongoose.model("CandidateProfileModel", candidateProfileSchema);
+
+export default CandidateProfileModel;

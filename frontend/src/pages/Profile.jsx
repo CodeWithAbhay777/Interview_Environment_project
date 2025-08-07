@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import Navbar from './shared/Navbar'
-import { Avatar, AvatarImage } from './ui/avatar'
-import { Button } from './ui/button'
+
+import { Avatar, AvatarImage } from '../components/ui/avatar'
+import { Button } from '../components/ui/button'
 import { Contact, Mail, Pen } from 'lucide-react'
-import { Badge } from './ui/badge'
-import { Label } from './ui/label'
-import AppliedJobTable from './AppliedJobTable'
-import UpdateProfileDialog from './UpdateProfileDialog'
+import { Badge } from '../components/ui/badge'
+import { Label } from '../components/ui/label'
+import AppliedJobTable from '../components/AppliedJobTable'
+import UpdateProfileDialog from '../components/UpdateProfileDialog'
 import { useSelector } from 'react-redux'
 import useGetAppliedJobs from '@/hooks/useGetAppliedJobs'
 
@@ -20,7 +20,7 @@ const Profile = () => {
 
     return (
         <div>
-            <Navbar />
+            
             <div className='max-w-4xl mx-auto bg-white border border-gray-200 rounded-2xl my-5 p-8'>
                 <div className='flex justify-between'>
                     <div className='flex items-center gap-4'>
