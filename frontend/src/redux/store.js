@@ -14,15 +14,18 @@ import {
 import storage from 'redux-persist/lib/storage'
 import companySlice from "./companySlice";
 import applicationSlice from "./applicationSlice";
+import userProfileSlice from "./userProfileSlice"
 
 const persistConfig = {
     key: 'root',
     version: 1,
     storage,
+    whitelist: ['auth'] 
 }
 
 const rootReducer = combineReducers({
     auth:authSlice,
+    profile:userProfileSlice,
     job:jobSlice,
     company:companySlice,
     application:applicationSlice

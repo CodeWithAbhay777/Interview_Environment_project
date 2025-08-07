@@ -19,15 +19,20 @@ const interviewSchema = mongoose.Schema({
     ref : 'userModel',
     required : true,
    },
-
-   scheduledAt : {
+   interviewType : {
     type : String,
+    enum : ['frontend', 'backend', 'fullstack'],
     required : true,
+   },
+   scheduledAt : {
+    type : Date,
+    required : true,
+    default: Date.now(),
    },
 
    status : {
     type : String,
-    enum : ['scheduled' , 'completed' ,, 'cancelled'],
+    enum : ['scheduled' , 'completed' , 'cancelled'],
     default : 'scheduled',
    },
 
@@ -36,12 +41,8 @@ const interviewSchema = mongoose.Schema({
     default : false,
    },
    
-   createdAt : {
-    type : String,
-    required : true,
-   }
 });
 
-const interviewModel = mongoose.model("interviewModel", interviewSchema);
+const InterviewModel = mongoose.model("InterviewModel", interviewSchema);
 
-export default interviewModel;
+export default InterviewModel;

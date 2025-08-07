@@ -20,6 +20,7 @@ const JobApplicationForm = () => {
     e.preventDefault();
     // Replace this with backend integration
     alert("Application submitted successfully!");
+    console.log(formData)
     setFormData({ name: '', email: '', resume: '', message: '' });
   };
 

@@ -1,154 +1,166 @@
-import userModel from '../models/user.module.js';
-import {generateToken} from '../utils/generateToken.js'
-import bcrypt from "bcrypt";
-import moment from "moment";
+import userModel from "../models/user.module.js";
+import { generateAccessAndRefereshTokens } from "../utils/generateTokens.js";
+import { cookieOptions as options } from "../utils/contants.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import UserModel from "../models/user.module.js";
 
-export const register = async (req,res) => {
-    try {
-        const {username , email , password , role , fullname } = req.body;
-        if (!username || !email || !password || !role || !fullname){
-            return res.status(400).json({
-                success : false,
-                message  : "All fields are required",
-            })
-        }
+export const register = asyncHandler(async (req, res) => {
+  const { username, email, password, role } = req.body;
 
-        const user = await userModel.findOne({username , email});
-
-        if (user){
-            return res.status(400).json({
-                success :  false,
-                message : "User already exists",
-            })
-        }
-
-        const hashedPassword = await bcrypt.hash(password , 10);
-
-        const createdAt = moment().format("D MMM YYYY");
-
-        const savedData = await userModel.create({
-            username ,
-            email , 
-            password : hashedPassword,
-            createdAt ,
-            fullname
-        })
-
-        if (!savedData) {
-            return res.status(400).json({
-                success : false , 
-                message : "Saving data : Something went wrong!"
-            })
-        }
-
-        generateToken(res ,savedData , "Register user successfully" );
-    } catch (error) {
-        console.log(error.message);
-        return res.status(500).json({
-            success : false,
-            message : "Register : Something went wrong!",
-        })
-    }
-}
-
-export const login = async (req, res) => {
-    try {
-        const { email, username, password , role } = req.body;
-
-        
-        if (!email || !username || !password || !role) {
-            return res.status(400).json({
-                success: false,
-                message: "Required all fields"
-            });
-        }
-
-        
-        const user = await userModel.findOne({
-            $and: [
-                {
-                    $or: [
-                        { email: email },
-                        { username: username }
-                    ]
-                },
-                { role: role }
-            ]
-        });
-
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials"
-            });
-        }
-
-        
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        
-        if (!isPasswordValid) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid credentials"
-            });
-        }
-
-        
-        generateToken(res, user, "Login successful");
-
-    } catch (error) {
-        console.log(error.message);
-        return res.status(500).json({
-            success: false,
-            message: "Login: Something went wrong!",
-            error: error.message
-        });
-    }
-};
-
-export const logout = async (_, res) => {
-  try {
-    return res.status(200).cookie("jobify_token", "", {
-      httpOnly: true,
-      
-      sameSite: "lax",
-       maxAge: 0 
-       
-      }).json({
-      message: "Logged out successfully.",
-      success: true,
-    });
-  } catch (error) {
-  
-    return res.status(500).json({
-      success: false,
-      message : "Failed to logout : Something went wrong",
-    });
+  if (!username || !email || !password || (!role || (role !== "candidate" && role !== "recruiter"))) {
+    throw new ApiError(400, "All fields are required");
   }
-};
 
-export const me = async (req, res) => {
-  try {
-    const token = req.cookies.jobify_token;
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
+  if (password.length < 8) {
+    throw new ApiError(400, "Password must be at least 8 characters long");
+  }
 
-    const decoded = jwt.verify(token, process.env.SECRET_TOKEN);
+  const user = await userModel.findOne({
+    $or: [{ username: username }, { email: email }],
+  });
 
+  if (user) {
+    throw new ApiError(400, "User already exists with this username or email");
+  }
+
+  const savedData = await userModel.create({
+    username,
+    email,
+    password,
+    role,
+    isVerified: false,
+  });
+
+  if (!savedData) {
+    throw new ApiError(500, "Saving data: Something went wrong!");
+  }
+
+  const requiredTokens = generateAccessAndRefereshTokens(savedData);
+
+  if (!requiredTokens.success) {
+    throw new ApiError(
+      500,
+      requiredTokens.message || "Failed to generate tokens"
+    );
+  }
+
+  savedData.refreshToken = requiredTokens?.refreshToken;
+
+  const finalSavedUser = await savedData
+    .save({ validateBeforeSave: false, new: true })
     
-    const user = await userModel.findById(decoded.userId).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-  
-    res.status(401).json({ success: false, message: "Invalid token" });
+  if (!finalSavedUser) {
+    throw new ApiError(500, "Failed to save user data");
   }
-};
+
+const dataToSend = {
+    _id: finalSavedUser._id,
+    username: finalSavedUser.username,
+    email: finalSavedUser.email,
+    role: finalSavedUser.role,
+    isEmailVerified: finalSavedUser.isEmailVerified,
+    isProfileComplete: finalSavedUser.isProfileComplete,
+    createdAt: finalSavedUser.createdAt,
+  };
+
+ 
+  // Set cookies and return response
+  return res
+    .status(201)
+    .cookie("jobify_access_token", requiredTokens.accessToken, options)
+    .cookie("jobify_refresh_token", requiredTokens.refreshToken, options)
+    .json(new ApiResponse(201, "User registered successfully", dataToSend));
+});
 
 
 
+
+export const login = asyncHandler(async (req, res) => {
+  const { emailOrUsername, password, role } = req.body;
+
+  if (!emailOrUsername || !password || !role) {
+    throw new ApiError(400, "Required all fields");
+  }
+
+  const user = await userModel.findOne({
+    $and: [
+      {
+        $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+      },
+      { role: role },
+    ],
+  });
+
+  if (!user) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid credentials");
+  }
+
+  const requiredTokens = generateAccessAndRefereshTokens(user);
+
+  if (!requiredTokens.success) {
+    throw new ApiError(400, "Required all fields");
+  }
+
+  user.refreshToken = requiredTokens?.refreshToken;
+
+  const finalSavedUser = await user
+    .save({ validateBeforeSave: false, new: true })
+    
+
+  if (!finalSavedUser) {
+    throw new ApiError(500, "Failed to save user data");
+  }
+
+  const dataToSend = {
+    _id: finalSavedUser._id,
+    username: finalSavedUser.username,
+    email: finalSavedUser.email,
+    role: finalSavedUser.role,
+    isEmailVerified: finalSavedUser.isEmailVerified,
+    isProfileComplete: finalSavedUser.isProfileComplete,
+    createdAt: finalSavedUser.createdAt,
+  };
+
+  return res.status(200)
+  .cookie("jobify_access_token", requiredTokens.accessToken, options)
+  .cookie("jobify_refresh_token", requiredTokens.refreshToken, options)
+  .json(new ApiResponse(200, "Login successfully", finalSavedUser));
+
+
+});
+
+
+
+
+export const logout = asyncHandler(async (req, res) => {
+
+  await UserModel.findByIdAndUpdate(req.id, {
+    refreshToken: null,
+  });
+
+  return res.status(200)
+  .clearCookie("jobify_access_token", options)
+  .clearCookie("jobify_refresh_token", options)
+  .json(new ApiResponse(200, "Logged out successfully", null));
+
+  
+});
+
+export const me = asyncHandler(async (req, res) => {
+    const user = await userModel.findById(req.id).select("-password -refreshToken");
+    
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    
+    return res.status(200).json(new ApiResponse(200, "User data fetched successfully", user));
+});
