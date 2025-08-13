@@ -10,7 +10,7 @@ const router = express.Router();
 //auth routes
 router.post('/register' ,validate(signupSchemaValidator), register);
 router.post('/login', (req,res,next) => {console.log('request.body ::::::', req.body); next() }, validate(loginSchemaValidator), login);
-router.get('logout' , isAuthenticated , logout);
+router.post('/logout' , isAuthenticated , logout);
 router.get('/me' , isAuthenticated , me);
 
 

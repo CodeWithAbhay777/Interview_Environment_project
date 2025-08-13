@@ -9,7 +9,13 @@ import UserModel from "../models/user.module.js";
 export const register = asyncHandler(async (req, res) => {
   const { username, email, password, role } = req.body;
 
-  if (!username || !email || !password || (!role || (role !== "candidate" && role !== "recruiter"))) {
+  if (
+    !username ||
+    !email ||
+    !password ||
+    !role ||
+    (role !== "candidate" && role !== "recruiter")
+  ) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -48,15 +54,16 @@ export const register = asyncHandler(async (req, res) => {
 
   savedData.refreshToken = requiredTokens?.refreshToken;
 
-  const finalSavedUser = await savedData
-    .save({ validateBeforeSave: false, new: true })
-    
+  const finalSavedUser = await savedData.save({
+    validateBeforeSave: false,
+    new: true,
+  });
 
   if (!finalSavedUser) {
     throw new ApiError(500, "Failed to save user data");
   }
 
-const dataToSend = {
+  const dataToSend = {
     _id: finalSavedUser._id,
     username: finalSavedUser.username,
     email: finalSavedUser.email,
@@ -66,7 +73,6 @@ const dataToSend = {
     createdAt: finalSavedUser.createdAt,
   };
 
- 
   // Set cookies and return response
   return res
     .status(201)
@@ -75,9 +81,6 @@ const dataToSend = {
     .json(new ApiResponse(201, "User registered successfully", dataToSend));
 });
 
-
-
-
 export const login = asyncHandler(async (req, res) => {
   const { emailOrUsername, password, role } = req.body;
 
@@ -85,14 +88,32 @@ export const login = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Required all fields");
   }
 
-  const user = await userModel.findOne({
-    $and: [
-      {
-        $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
-      },
-      { role: role },
-    ],
-  });
+  let user;
+
+  if (role === "candidate") {
+    user = await userModel.findOne({
+      $and: [
+        {
+          $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+        },
+        { role: role },
+      ],
+    });
+  }
+  if (role === "recruiter" || role === "admin") {
+    user = await userModel.findOne({
+      $and: [
+        {
+          $or: [{ email: emailOrUsername }, { username: emailOrUsername }],
+        },
+        {
+          $or: [{ role : 'recruiter'} , { role : 'admin'}]
+        }
+        
+        
+      ],
+    });
+  }
 
   if (!user) {
     throw new ApiError(401, "Invalid credentials");
@@ -112,9 +133,10 @@ export const login = asyncHandler(async (req, res) => {
 
   user.refreshToken = requiredTokens?.refreshToken;
 
-  const finalSavedUser = await user
-    .save({ validateBeforeSave: false, new: true })
-    
+  const finalSavedUser = await user.save({
+    validateBeforeSave: false,
+    new: true,
+  });
 
   if (!finalSavedUser) {
     throw new ApiError(500, "Failed to save user data");
@@ -130,37 +152,35 @@ export const login = asyncHandler(async (req, res) => {
     createdAt: finalSavedUser.createdAt,
   };
 
-  return res.status(200)
-  .cookie("jobify_access_token", requiredTokens.accessToken, options)
-  .cookie("jobify_refresh_token", requiredTokens.refreshToken, options)
-  .json(new ApiResponse(200, "Login successfully", finalSavedUser));
-
-
+  return res
+    .status(200)
+    .cookie("jobify_access_token", requiredTokens.accessToken, options)
+    .cookie("jobify_refresh_token", requiredTokens.refreshToken, options)
+    .json(new ApiResponse(200, "Login successfully", finalSavedUser));
 });
 
-
-
-
 export const logout = asyncHandler(async (req, res) => {
-
   await UserModel.findByIdAndUpdate(req.id, {
     refreshToken: null,
   });
 
-  return res.status(200)
-  .clearCookie("jobify_access_token", options)
-  .clearCookie("jobify_refresh_token", options)
-  .json(new ApiResponse(200, "Logged out successfully", null));
-
-  
+  return res
+    .status(200)
+    .clearCookie("jobify_access_token", options)
+    .clearCookie("jobify_refresh_token", options)
+    .json(new ApiResponse(200, "Logged out successfully", null));
 });
 
 export const me = asyncHandler(async (req, res) => {
-    const user = await userModel.findById(req.id).select("-password -refreshToken");
-    
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-    
-    return res.status(200).json(new ApiResponse(200, "User data fetched successfully", user));
+  const user = await userModel
+    .findById(req.id)
+    .select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User data fetched successfully", user));
 });
