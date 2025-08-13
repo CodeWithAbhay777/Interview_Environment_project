@@ -6,7 +6,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const sendVerificationCode = asyncHandler(async (req, res) => {
-    console.log("query ", req.query , "params ",req.params );
+    
     const { email } = req.query;
     
     if (!email) {

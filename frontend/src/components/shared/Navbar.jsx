@@ -17,30 +17,36 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { useMutation } from "@tanstack/react-query";
+import { logoutUser } from "@/api/auth/logoutUser";
+import { useGetProfileQuery } from "@/hooks/queries/useGetProfileQuery";
+import { useToastOnError } from "@/hooks/useToastOnError";
+
 
 const Navbar = () => {
   const { user, isAuthenticated } = useSelector((store) => store.auth);
-  const { userProfile } = useSelector((store) => store.profile);
+  
   const dispatch = useDispatch();
- 
 
-  console.log("NAVBAR : logggged")
+  const {data : userProfile , isError : profileError} = useGetProfileQuery(user?._id, user?.role, {
+      enabled: isAuthenticated && user?.isProfileComplete,
+    });
+  
+  useToastOnError(profileError , 'Fetching profile : Something went wrong!');
 
-  const logoutHandler = async () => {
-    try {
-      const res = await axios.get(`${USER_API_END_POINT}/logout`, {
-        withCredentials: true,
-      });
-      if (res.data.success) {
-        dispatch(setUser(null));
-        navigate("/");
-        toast.success(res.data.message);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error(error.response.data.message);
+  console.log("NAVBAR : logggged");
+
+  const logoutMutation = useMutation({
+    mutationFn : logoutUser,
+    onSuccess : (data) => {
+      toast.success(data.message || "Logged out successfully");
+      dispatch(setUser({user : null , isAuthenticated : false}));
+    },
+    onError : (err) => {
+      toast.error(err.message || "Whilte logout : Something went wrong!");
     }
-  };
+  })
+
   return (
     <div className="bg-white fixed top-0 left-0 right-0 z-50 shadow-md  ">
       <div className="flex items-center justify-between mx-auto w-full px-4 md:max-w-7xl h-16">
@@ -49,96 +55,98 @@ const Navbar = () => {
             Jobify<span className="text-[#6A38C2]">.AI</span>
           </h1>
         </div>
+        <div className="h-full flex items-center justify center gap-2 md:gap-4">
+          {!isAuthenticated && (
+            <Link to={"/login"}>
+              <Button className="bg-[#6A38C2] hover:bg-[#8952e7]">Login</Button>
+            </Link>
+          )}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <Avatar className="border-2xl border-black">
-              <AvatarImage src={userProfile?.profilePhoto || 'https://github.com/shadcn.png'} />
-              <AvatarFallback>JAI</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[12rem]">
-            <DropdownMenuLabel>{user?.role || 'User'}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Avatar className="border-2xl border-black">
+                <AvatarImage
+                  src={
+                    userProfile?.profilePhoto || "https://github.com/shadcn.png"
+                  }
+                />
+                <AvatarFallback>JAI</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[12rem]">
+              <DropdownMenuLabel>{user?.role || "User"}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
                 <Link to="/">Home</Link>
-                
-            </DropdownMenuItem>
-            <DropdownMenuItem>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
                 <Link to="/jobs">Job openings</Link>
-                
-            </DropdownMenuItem>
-            
-            {
-                user?.role === "admin" && (
-                    <>
-                    <DropdownMenuItem>
-                        <Link to="/dashboard">Dashboard</Link>
-                        
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/profile">Profile</Link>
-                  
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/notifications">Notifications</Link>
-                  
-                    </DropdownMenuItem>
-                    </>
-                )
-            }
+              </DropdownMenuItem>
 
-            {
-                user?.role === "candidate" && (
-                    <>
-                    <DropdownMenuItem>
-                        <Link to="/profile">Profile</Link>
+              {user?.role === "admin" && (
+                <>
+                  <DropdownMenuItem>
+                    <Link to="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/notifications">Notifications</Link>
+                  </DropdownMenuItem>
                   
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/notifications">Notifications</Link>
+                  <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
                   
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/upcoming-interviews">Upcoming Interviews</Link>
-                  
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/applied-jobs">Applied jobs</Link>
-                  
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/results">Results</Link>
-                  
-                    </DropdownMenuItem>
-                    
-                    </>
-                )
-            }
+                </>
+              )}
 
-            {
-                user?.role === "recruiter" && (
-                    <>
-                    <DropdownMenuItem>
-                        <Link to="/profile">Profile</Link>
+              {user?.role === "candidate" && (
+                <>
+                  <Link to="/profile">
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuItem>
+                    <Link to="/notifications">Notifications</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/upcoming-interviews">Upcoming Interviews</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/applied-jobs">Applied jobs</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/results">Results</Link>
+                  </DropdownMenuItem>
                   
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/notifications">Notifications</Link>
+                  <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
                   
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Link to="/upcoming-interviews">Upcoming Interviews</Link>
+                </>
+              )}
+
+              {user?.role === "recruiter" && (
+                <>
+                  <Link to="/profile">
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                  </Link>
+
+                  <DropdownMenuItem>
+                    <Link to="/notifications">Notifications</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/upcoming-interviews">Upcoming Interviews</Link>
+                  </DropdownMenuItem>
                   
-                    </DropdownMenuItem>
-                    
-                    </>
-                )
-            }
-            
-            <DropdownMenuItem>About us</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
+                  
+                </>
+              )}
+
+              <DropdownMenuItem>
+                <Link to="/about">About us</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

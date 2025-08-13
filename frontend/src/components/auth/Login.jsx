@@ -77,7 +77,7 @@ const Login = () => {
                     <div className='my-2'>
                         <Label>Email or Username</Label>
                         <Input
-                            type="email"
+                            type="text"
                             value={input.emailOrUsername}
                             name="emailOrUsername"
                             onChange={changeEventHandler}
