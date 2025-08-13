@@ -88,7 +88,7 @@ const ProfileForm = () => {
     mutationFn: submitUserProfile,
     onSuccess: (data) => {
       dispatch(setUser({user : data.data.newUpdatedUser}));
-            dispatch(setProfile({profile : data.data.createdProfile}));
+      // dispatch(setProfile({profile : data.data.createdProfile}));
       toast.success(data.message || "Candidate profile created successfully!");
       navigate("/");
     },
