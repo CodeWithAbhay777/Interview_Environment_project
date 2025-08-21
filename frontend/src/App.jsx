@@ -19,6 +19,10 @@ import Mainlayout from "./layout/Mainlayout";
 import Verification from "./pages/Verification";
 import CandidateProfileForm from "./pages/CandidateProfileForm";
 import RecruiterProfileForm from "./pages/RecruiterProfileForm";
+import AdminDashboardLayout from "./layout/AdminDashboardLayout";
+import DashboardJobs from "./components/admin/DashboardJobs";
+import ProtectedRouteLayout from "./layout/ProtectedRouteLayout";
+import CreateJobsForm from "./components/admin/CreateJobsForm";
 
 const appRouter = createBrowserRouter([
   {
@@ -30,48 +34,49 @@ const appRouter = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/verification",
+        path: "verification",
         element: <Verification />,
       },
       {
-        path: "/login",
+        path: "login",
         element: <Login />,
       },
       {
-        path: "/signup",
+        path: "signup",
         element: <Signup />,
       },
       {
-        path: "/jobs",
+        path: "jobs",
         element: <Jobs />,
       },
       {
-        path: "/description/:id",
+        path: "description/:id",
         element: <JobDescription />,
       },
       {
-        path: "/browse",
+        path: "browse",
         element: <Browse />,
       },
       {
-        path: "/profile",
+        path: "profile",
         element: <Profile />,
       },
       {
-        path: "/candidate-profile-form",
+        path: "candidate-profile-form",
         element: <CandidateProfileForm />,
       },
       {
-        path: "/recruiter-profile-form",
+        path: "recruiter-profile-form",
         element: <RecruiterProfileForm />,
       },
       {
-        path: "/apply",
+        path: "apply",
         element: <JobApplicationForm />,
       },
       // admin ke liye yha se start hoga
+
       {
-        path: "/admin/companies",
+        path: "admin/companies",
         element: (
           <ProtectedRoute>
             <Companies />
@@ -79,7 +84,7 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/admin/companies/create",
+        path: "admin/companies/create",
         element: (
           <ProtectedRoute>
             <CompanyCreate />
@@ -87,7 +92,7 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/admin/companies/:id",
+        path: "admin/companies/:id",
         element: (
           <ProtectedRoute>
             <CompanySetup />
@@ -95,7 +100,7 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/admin/jobs",
+        path: "admin/jobs",
         element: (
           <ProtectedRoute>
             <AdminJobs />
@@ -103,7 +108,7 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/admin/jobs/create",
+        path: "admin/jobs/create",
         element: (
           <ProtectedRoute>
             <PostJob />
@@ -111,13 +116,33 @@ const appRouter = createBrowserRouter([
         ),
       },
       {
-        path: "/admin/jobs/:id/applicants",
+        path: "admin/jobs/:id/applicants",
         element: (
           <ProtectedRoute>
             <Applicants />
           </ProtectedRoute>
         ),
       },
+    ],
+  },
+
+  // ADMIN ROUTES
+  {
+    path: "/admin/dashboard",
+    element: (
+      <ProtectedRouteLayout>
+        <AdminDashboardLayout />
+      </ProtectedRouteLayout>
+    ),
+    children: [
+      {
+        path: "jobs",
+        element: <DashboardJobs />,
+      },
+      {
+        path : "jobs/create",
+        element: <CreateJobsForm />
+      }
     ],
   },
 ]);
