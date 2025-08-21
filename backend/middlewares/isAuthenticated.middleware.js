@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { checkForRefreshToken } from "../utils/checkForRefreshToken.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const isAuthenticated = async (req, res, next) => {
   try {
@@ -7,19 +8,18 @@ const isAuthenticated = async (req, res, next) => {
     const refreshToken = req.cookies?.jobify_refresh_token;
 
     if (!accessToken && !refreshToken) {
-      
-        throw new Error(401, "Unauthorized request : No token found");
-      }
+      throw new ApiError(401, "Unauthorized request : No token found");
+    }
 
-      if (!accessToken) {
-        await checkForRefreshToken(refreshToken, req, res, next);
-      }
+    if (!accessToken) {
+      return await checkForRefreshToken(refreshToken, req, res, next);
+    }
 
-      const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
 
-      req.id = decoded.userId;
+    req.id = decoded.userId;
 
-      next();
+    next();
   } catch (error) {
     console.log(error.name);
     if (
@@ -28,11 +28,15 @@ const isAuthenticated = async (req, res, next) => {
       error.name === "NotBeforeError"
     ) {
       const refreshToken = req.cookies?.jobify_refresh_token;
-      
-      await checkForRefreshToken(refreshToken, req, res, next);
-    }
 
-    throw new Error(401, error?.message || "Unauthorized request : Invalid access token");
+      await checkForRefreshToken(refreshToken, req, res, next);
+      return;
+    } else {
+      throw new ApiError(
+        401,
+        error?.message || "Unauthorized request : Invalid access token"
+      );
+    }
   }
 };
 

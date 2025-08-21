@@ -6,6 +6,20 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-})
+});
+
+axiosInstance.interceptors.response.use(
+  res => res,
+  (error) => {
+
+    const backendMsg = error.response?.data?.message;
+    const customError = new Error(backendMsg);
+    customError.status = error.response?.data?.status || 500;
+    customError.success = error.response?.data?.success || false;
+    
+    
+    return Promise.reject(customError);
+  }
+)
 
 export default axiosInstance

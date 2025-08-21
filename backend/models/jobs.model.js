@@ -6,6 +6,25 @@ const jobSchema = mongoose.Schema({
         type : String,
         required : true
     },
+    type :  {
+        enum: ['job' , 'internship'],
+        default : "job",
+        required : true,
+    },
+    salaryOffered : {
+        type : Number,
+        required: true,
+    },
+    salaryPeriod: {
+      type: String,
+      enum: ["monthly", "yearly", "hourly"],
+      default: "yearly",
+    },
+    salaryCurrency: {
+      type: String,
+      enum: ["INR", "USD", "EUR", "GBP"],
+      default: "INR",
+    },
     description : {
         type : String,
         required : true,
@@ -18,11 +37,19 @@ const jobSchema = mongoose.Schema({
     skillsRequired : {
         type : [String]
     },
-    createdAt : {
-        type : String,
-        required : true,
-        
+    experienceLevel: {
+      type: String,
+      enum: ["fresher", "junior", "mid", "senior", "lead"],
+      default: "fresher",
     },
+    openings: {
+      type: Number,
+      default: 1,
+    },
+    applicationDeadline: {
+      type: Date,
+    },
+    
     isOpen : {
         type : Boolean,
         default : true
