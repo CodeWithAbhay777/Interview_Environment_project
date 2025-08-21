@@ -20,11 +20,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { verifyEmail } from "@/api/emailVerification/verifyEmail";
 import { sendOtp } from "@/api/emailVerification/sendOtp";
 import { useToastOnError } from "@/hooks/useToastOnError";
-import { setProfile } from "../redux/userProfileSlice";
+// import { setProfile } from "../redux/userProfileSlice";
 import { setUser , setIsEmailVerification } from "../redux/authSlice";
 import { validatePhoneNumber } from "../utils/phoneValidation";
 import { submitUserProfile } from "../api/candidateProfile/createUserProfile";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ProfileForm = () => {
   const { user, isAuthenticated } = useSelector((store) => store.auth);
@@ -59,7 +59,7 @@ const ProfileForm = () => {
   const {
     data: sendOtpData,
     isFetching: sendOtpIsFetching,
-    isError: sendOtpIsError,
+    error: sendOtpError,
     refetch: sendOtpRefetch,
   } = useQuery({
     queryKey: ["otp"],
@@ -98,7 +98,7 @@ const ProfileForm = () => {
     },
   });
 
-  useToastOnError(sendOtpIsError, "Sending OTP failed. Please try again.");
+  useToastOnError(sendOtpError, "Sending OTP failed. Please try again.");
 
   useEffect(() => {
     if (sendOtpData) {

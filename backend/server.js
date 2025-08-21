@@ -8,6 +8,7 @@ import userRoutes from './routes/user.route.js';
 import emailVerification from './routes/emailVerification.route.js';
 import { redisConnection } from "./libs/redisConnection.js";
 import profileRoutes from './routes/profile.route.js'; 
+import {errorHandler} from './middlewares/errorHandler.middleware.js';
 
 
 
@@ -37,5 +38,10 @@ redisConnection()
   app.use('/api/v1/email' , emailVerification);
   app.use('/api/v1/profile', profileRoutes); 
   
+
+
+//Error handling resposne
+app.use(errorHandler);
+
 
 app.listen(PORT, () => console.log("server is running"));

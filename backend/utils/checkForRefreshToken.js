@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import UserModel from "../models/user.module.js";
 import { generateAccessAndRefereshTokens } from "./generateTokens.js";
 import { ApiError } from "./ApiError.js";
-import { cookieOptions as options } from "./contants.js";
+import { accessCookieOptions, refreshCookieOptions } from "./contants.js";
 
 export const checkForRefreshToken = async (refreshToken, req, res, next) => {
     
@@ -45,8 +45,8 @@ export const checkForRefreshToken = async (refreshToken, req, res, next) => {
       throw new ApiError(500, "Failed to save user data");
     }
   
-    res.cookie("jobify_access_token", requiredTokens.accessToken, options)
-    .cookie("jobify_refresh_token", requiredTokens.refreshToken, options);
+    res.cookie("jobify_access_token", requiredTokens.accessToken, accessCookieOptions)
+    .cookie("jobify_refresh_token", requiredTokens.refreshToken, refreshCookieOptions);
   
     req.id = user._id;
   

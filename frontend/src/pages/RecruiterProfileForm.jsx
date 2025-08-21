@@ -29,13 +29,13 @@ import { verifyEmail } from "@/api/emailVerification/verifyEmail";
 import { toast } from "sonner";
 import { setUser , setIsEmailVerification} from "@/redux/authSlice";
 import { submitUserProfile } from "@/api/recruiterProfile/submitUserProfile";
-import { setProfile } from "@/redux/userProfileSlice";
+// import { setProfile } from "@/redux/userProfileSlice";
 import { useToastOnError } from "@/hooks/useToastOnError";
 import { validatePhoneNumber } from "@/utils/phoneValidation";
 
 const RecruiterProfileForm = () => {
   const { user, isAuthenticated } = useSelector((store) => store.auth);
-  const {userProfile} = useSelector(store => store.profile);
+  // const {userProfile} = useSelector(store => store.profile);
   const [expertiseInput, setExpertiseInput] = useState("");
   const [otp, setOtp] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
@@ -66,7 +66,7 @@ const RecruiterProfileForm = () => {
   const {
     data: sendOtpData,
     isFetching: sendOtpIsFetching,
-    isError: sendOtpIsError,
+    error: sendOtpError,
     refetch: sendOtpRefetch,
   } = useQuery({
     queryKey: ["otp"],
@@ -108,7 +108,7 @@ const RecruiterProfileForm = () => {
     },
   });
 
-  useToastOnError(sendOtpIsError, "Sending OTP failed. Please try again.");
+  useToastOnError(sendOtpError, "Sending OTP failed. Please try again.");
 
   useEffect(() => {
       if (sendOtpData) {

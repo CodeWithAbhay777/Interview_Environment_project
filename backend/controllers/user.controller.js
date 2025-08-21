@@ -1,6 +1,6 @@
 import userModel from "../models/user.module.js";
 import { generateAccessAndRefereshTokens } from "../utils/generateTokens.js";
-import { cookieOptions as options } from "../utils/contants.js";
+import { accessCookieOptions, refreshCookieOptions } from "../utils/contants.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -76,8 +76,8 @@ export const register = asyncHandler(async (req, res) => {
   // Set cookies and return response
   return res
     .status(201)
-    .cookie("jobify_access_token", requiredTokens.accessToken, options)
-    .cookie("jobify_refresh_token", requiredTokens.refreshToken, options)
+    .cookie("jobify_access_token", requiredTokens.accessToken, accessCookieOptions)
+    .cookie("jobify_refresh_token", requiredTokens.refreshToken, refreshCookieOptions)
     .json(new ApiResponse(201, "User registered successfully", dataToSend));
 });
 
@@ -154,8 +154,8 @@ export const login = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("jobify_access_token", requiredTokens.accessToken, options)
-    .cookie("jobify_refresh_token", requiredTokens.refreshToken, options)
+    .cookie("jobify_access_token", requiredTokens.accessToken, accessCookieOptions)
+    .cookie("jobify_refresh_token", requiredTokens.refreshToken, refreshCookieOptions)
     .json(new ApiResponse(200, "Login successfully", finalSavedUser));
 });
 
@@ -166,8 +166,8 @@ export const logout = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .clearCookie("jobify_access_token", options)
-    .clearCookie("jobify_refresh_token", options)
+    .clearCookie("jobify_access_token", accessCookieOptions)
+    .clearCookie("jobify_refresh_token", refreshCookieOptions)
     .json(new ApiResponse(200, "Logged out successfully", null));
 });
 
