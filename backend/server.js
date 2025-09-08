@@ -9,6 +9,7 @@ import emailVerification from './routes/emailVerification.route.js';
 import { redisConnection } from "./libs/redisConnection.js";
 import profileRoutes from './routes/profile.route.js'; 
 import {errorHandler} from './middlewares/errorHandler.middleware.js';
+import jobRoutes from './routes/jobs.route.js';
 
 
 
@@ -37,6 +38,7 @@ redisConnection()
   app.use('/api/v1/user' , userRoutes);
   app.use('/api/v1/email' , emailVerification);
   app.use('/api/v1/profile', profileRoutes); 
+  app.use('/api/v1/jobs' , jobRoutes)
   
 
 

@@ -4,19 +4,19 @@ const interviewSchema = mongoose.Schema({
 
    job : {
     type : mongoose.Schema.Types.ObjectId,
-    ref : 'jobModel',
+    ref : 'JobModel',
     required : true,
    },
 
    candidateSelected : {
     type : mongoose.Schema.Types.ObjectId,
-    ref : 'userModel',
+    ref : 'UserModel',
     required : true,
    },
 
    interviewerAssigned : {
     type : mongoose.Schema.Types.ObjectId,
-    ref : 'userModel',
+    ref : 'UserModel',
     required : true,
    },
    interviewType : {
