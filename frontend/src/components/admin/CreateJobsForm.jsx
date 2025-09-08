@@ -17,17 +17,23 @@ import {
 } from "@/utils/constant";
 import { Textarea } from "../ui/textarea";
 import { Badge } from "../ui/badge";
-import { BriefcaseBusiness, ChevronDownIcon, X } from "lucide-react";
+import { BriefcaseBusiness, ChevronDownIcon, LoaderCircle, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { Calendar } from "../ui/calendar";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
+import { jobPost } from "@/api/jobs/jobPost";
+import { useMutation } from "@tanstack/react-query";
+import { validateJobData } from "@/utils/jobValidation";
 
 const CreateJobsForm = () => {
+  const { user } = useSelector((store) => store.auth);
   const [skillInput, setSkillInput] = useState("");
   const [openDate, setOpenDate] = useState(false);
   const [date, setDate] = useState(new Date());
   const [jobData, setJobData] = useState({
+    postedBy: user?._id,
     title: "",
     type: "",
     salaryOffered: "",
@@ -54,8 +60,46 @@ const CreateJobsForm = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log("hello");
+  //apiCall
+  const jobPostingMutation = useMutation({
+    mutationKey: ["jobPost"],
+    mutationFn: jobPost,
+    onSuccess: (data) => {
+      toast.message(data.message);
+      setJobData({
+        postedBy: user?._id,
+        title: "",
+        type: "",
+        salaryOffered: "",
+        salaryPeriod: "",
+        salaryCurrency: "",
+        description: "",
+        department: "",
+        skillsRequired: [],
+        experienceLevel: "",
+        openings: 1,
+        applicationDeadline: "",
+      });
+
+      naviagate('/admin/dashboard/jobs');
+    },
+
+    onError: (err) => {
+      toast.error(err.message || "Posting job : Something went wrong");
+      
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const { isValid, message } = validateJobData(jobData);
+    if (!isValid) {
+      toast.error(message || 'Form is not filled correctly');
+      return;
+    }
+
+    jobPostingMutation.mutate(jobData);
+
   };
   return (
     <div className="w-full h-[calc(100vh-6rem)] flex flex-col p-2 overflow-y-scroll">
@@ -214,7 +258,7 @@ const CreateJobsForm = () => {
             <Textarea
               id="description"
               name="description"
-              
+
               onChange={(e) =>
                 setJobData((prev) => ({
                   ...prev,
@@ -346,7 +390,15 @@ const CreateJobsForm = () => {
               />
             </div>
           </div>
-          <Button className="w-full mt-2 bg-[#6A38C2] hover:bg-[#5b30a6] text-white"><BriefcaseBusiness /> Publish job</Button>
+          <Button className="w-full mt-2 bg-[#6A38C2] hover:bg-[#5b30a6] text-white" disabled={jobPostingMutation.isPending}>
+            {!jobPostingMutation.isPending ? (
+              <>
+                <BriefcaseBusiness /> post job
+              </>
+
+            ) : (
+              <LoaderCircle className="h-4 w-4 animate-spin infinite" />
+            )}</Button>
         </form>
       </div>
     </div>

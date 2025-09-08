@@ -4,7 +4,7 @@ const interviewerProfileSchema = mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "userModel",
+      ref: "UserModel",
       required: true,
       unique: true,
     },
