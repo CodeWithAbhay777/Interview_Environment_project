@@ -36,7 +36,7 @@ const jobSchema = mongoose.Schema({
     required: true,
   },
   department: {
-    type : String,
+    type: String,
     enum: ["software engineer", "backend developer", "frontend developer", "fullstack developer"],
     default: "software engineer",
     required: true,
