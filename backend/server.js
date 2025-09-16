@@ -13,6 +13,7 @@ import jobRoutes from './routes/jobs.route.js';
 
 
 
+
 const PORT = process.env.PORT || 8080;
 
 app.use(express.json());
@@ -32,7 +33,9 @@ main()
   .catch((err) => console.log("Error in Db connection"));
 
 //redis connection
-redisConnection()
+redisConnection();
+
+
   
 
   app.use('/api/v1/user' , userRoutes);
