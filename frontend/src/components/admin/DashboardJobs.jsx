@@ -1,11 +1,13 @@
 import React, { useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
+import { BriefcaseBusiness, Plus, SquarePen, Users  } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Input } from "../ui/input";
 import { useGetAdminJobs } from "@/hooks/queries/useGetAdminJobs";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
+import { Skeleton } from "../ui/skeleton";
+import { Badge } from "../ui/badge";
 
 const DashboardJobs = () => {
   const [state, setState] = useState([
@@ -26,7 +28,7 @@ const DashboardJobs = () => {
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState("");
   const [page, setPage] = useState(1);
-  const limit = useRef(20);
+  const limit = useRef(10);
 
   const filterChange = (filter) => {
     if (!filter) return;
@@ -103,36 +105,69 @@ const DashboardJobs = () => {
         <div className="w-full flex flex-col flex-1 mt-3 overflow-y-auto">
 
 
-         
+
           {/* all jobs data */}
           <div className="flex-1 overflow-y-auto">
-            
-          
 
-            <div id="all-jobs-block" className=" mt-2 w-full rounded p-2 ">
-            {isLoading && <p>Loading...</p>}
-            {isError && <p className="text-red-500">Error fetching jobs</p>}
-            {!isLoading && jobs.length === 0 && <p>No jobs found</p>}
 
-            <div className="mt-6 space-y-3">
-              {jobs.map((job) => (
-                <div key={job._id} className="border rounded p-3 shadow-sm">
-                  <h3 className="font-semibold">{job.title}</h3>
-                  <p>{job.department} | {job.experienceLevel}</p>
-                  <p>Salary: {job.salaryOffered}</p>
-                  <span className={job.isOpen ? "text-green-600" : "text-red-600"}>
-                    {job.isOpen ? "Open" : "Closed"}
-                  </span>
-                  <p>Applicants: {job.applicantsCount}</p>
-                </div>
-              ))}
+
+            <div id="all-jobs-block" className=" mt-6 w-full rounded ">
+              {isLoading && (
+                <>
+                  <Skeleton className="h-32 w-full mt-2 bg-gray-200 opacity:70" />
+                  <Skeleton className="h-32 w-full mt-2 bg-gray-200 opacity:70" />
+                  <Skeleton className="h-32 w-full mt-2 bg-gray-200 opacity:70" />
+                  <Skeleton className="h-32 w-full mt-2 bg-gray-200 opacity:70" />
+                  <Skeleton className="h-32 w-full mt-2 bg-gray-200 opacity:70" />
+                  <Skeleton className="h-32 w-full mt-2 bg-gray-200 opacity:70" />
+                </>
+
+              )}
+              {isError && <p className="text-red-500">Error fetching jobs</p>}
+              {!isLoading && jobs.length === 0 && <p className="">No jobs found</p>}
+
+              <div className="mt-2 space-y-2">
+                {jobs.map((job) => (
+
+                  <div className="border w-full h-32 rounded p-2 md:p-3 shadow-md flex" key={job._id}>
+
+                    <div id="left" className="w-[92%] h-full ">
+                      <div className="w-full flex items-center gap-2 sm:gap-4">
+                        <span className="flex items-center gap-2">
+                          <BriefcaseBusiness className="text-gray-400 w-5 h-5 sm:w-6 sm:h-6" />
+                          <h3 className="font-bold text-lg md:text-xl truncate">{job.title}</h3>
+                        </span>
+
+                        <Badge variant="default" className="bg-[#6A38C2] hover:bg-[#5b30a6] truncate">{job.experienceLevel}</Badge>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-gray-500 font-semibold truncate">{job.department} |  Salary: {job.salaryCurrency} {job.salaryOffered}</p>
+                      </div>
+                      <div className="mt-3 flex items-center">
+                        <Badge className={job.isOpen ? "bg-green-200 text-green-800 hover:bg-green-100" : "bg-red-200 text-red-800 hover:bg-red-100"}>
+                          {job.isOpen ? "Open" : "Closed"}
+                        </Badge>
+                        <span className="ml-4 text-gray-600 font-semibold flex gap-2 truncate"><Users className="w-5 h-6 text-gray-400 " /> Applicants: {job.applicantsCount}</span>
+                      </div>
+
+
+
+
+                    </div>
+                    <div id="right" className=" flex-1 h-full flex justify-center items-center">
+                      <Link to={`/admin/dashboard/jobs/${job._id}`} ><SquarePen className="text-[#5b30a6] hover:text-[#b18af0] "/></Link>
+                    </div>
+                  </div>
+
+
+                ))}
+              </div>
+
+
             </div>
 
-
           </div>
 
-          </div>
-          
 
           {/* pagination */}
           {totalPages > 1 && (
