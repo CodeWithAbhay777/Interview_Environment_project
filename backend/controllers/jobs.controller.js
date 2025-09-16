@@ -27,9 +27,6 @@ export const getAllJobsByAdmin = asyncHandler(async (req, res) => {
   
   if (search) matchStage.title = { $regex: search, $options: "i" };
 
-  console.log("Match Stage ----> " , matchStage);
-
-  
   const jobs = await JobModel.aggregate([
     { $match: matchStage },
     { $sort: { createdAt: -1 } },
@@ -39,7 +36,7 @@ export const getAllJobsByAdmin = asyncHandler(async (req, res) => {
     
     {
       $lookup: {
-        from: "ApplicationModel",
+        from: "applicationmodels",
         localField: "_id",
         foreignField: "job",
         as: "applications",
@@ -62,13 +59,14 @@ export const getAllJobsByAdmin = asyncHandler(async (req, res) => {
         experienceLevel: 1,
         salaryOffered: 1,
         isOpen: 1,
+        salaryCurrency: 1,
         applicantsCount: 1,
       },
     },
   ]);
 
   // Total count (for pagination metadata)
-  console.log("JOBS ------- > " , jobs);
+  
   const totalJobs = await JobModel.countDocuments(matchStage);
 
 
