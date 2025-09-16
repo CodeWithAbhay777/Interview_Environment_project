@@ -11,7 +11,7 @@ export const errorHandler = (err, req, res, next) => {
       status : err.statusCode,
     });
   }
-  console.log("API ERROR NOT HIT");
+  console.log("API ERROR NOT HIT", err);
   return res.status(500).json({
     success: false,
     message: "ApiError Missed : Internal Server Error",
