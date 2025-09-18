@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { BriefcaseBusiness, Plus, SquarePen, Users  } from "lucide-react";
+import { BriefcaseBusiness, Plus, SquarePen, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Input } from "../ui/input";
@@ -142,6 +142,7 @@ const DashboardJobs = () => {
                       </div>
                       <div className="mt-2">
                         <p className="text-gray-500 font-semibold truncate">{job.department} |  Salary: {job.salaryCurrency} {job.salaryOffered}</p>
+                        <p></p>
                       </div>
                       <div className="mt-3 flex items-center">
                         <Badge className={job.isOpen ? "bg-green-200 text-green-800 hover:bg-green-100" : "bg-red-200 text-red-800 hover:bg-red-100"}>
@@ -155,7 +156,7 @@ const DashboardJobs = () => {
 
                     </div>
                     <div id="right" className=" flex-1 h-full flex justify-center items-center">
-                      <Link to={`/admin/dashboard/jobs/${job._id}`} ><SquarePen className="text-[#5b30a6] hover:text-[#b18af0] "/></Link>
+                      <Link to={`/admin/dashboard/jobs/${job._id}`} ><SquarePen className="text-[#5b30a6] hover:text-[#b18af0] " /></Link>
                     </div>
                   </div>
 

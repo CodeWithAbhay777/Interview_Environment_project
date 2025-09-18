@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import UserModel from '../models/user.module.js';
+import UserModel from '../models/user.model.js';
 import { success } from 'zod';
 
 export const generateAccessAndRefereshTokens  = (user) => {

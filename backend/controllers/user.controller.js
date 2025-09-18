@@ -1,10 +1,10 @@
-import userModel from "../models/user.module.js";
+import userModel from "../models/user.model.js";
 import { generateAccessAndRefereshTokens } from "../utils/generateTokens.js";
 import { accessCookieOptions, refreshCookieOptions } from "../utils/contants.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import UserModel from "../models/user.module.js";
+import UserModel from "../models/user.model.js";
 
 export const register = asyncHandler(async (req, res) => {
   const { username, email, password, role } = req.body;
