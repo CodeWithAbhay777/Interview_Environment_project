@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import UserModel from "../models/user.module.js";
+import UserModel from "../models/user.model.js";
 import { generateAccessAndRefereshTokens } from "./generateTokens.js";
 import { ApiError } from "./ApiError.js";
 import { accessCookieOptions, refreshCookieOptions } from "./contants.js";

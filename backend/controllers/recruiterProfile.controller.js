@@ -1,5 +1,5 @@
 import InterviewerProfileModel from "../models/interviewerProfile.model.js";
-import UserModel from "../models/user.module.js";
+import UserModel from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
