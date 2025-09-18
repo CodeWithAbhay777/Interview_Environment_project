@@ -1,4 +1,4 @@
-import UserModel from '../models/user.module.js';
+import UserModel from '../models/user.model.js';
 import redis from '../libs/redisConnection.js';
 import { sendVerificationEmail } from '../templates/emailVerificationCode.js';
 import { ApiError } from '../utils/ApiError.js';
