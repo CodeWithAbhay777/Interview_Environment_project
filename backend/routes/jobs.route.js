@@ -5,7 +5,7 @@ import isAuthenticated from '../middlewares/isAuthenticated.middleware.js';
 import validate from '../middlewares/validate.js';
 import { isAdmin } from '../middlewares/isAdmin.middleware.js';
 import { jobSchema } from '../validators/jobs.Validator.js';
-import {createJob, getAllJobsByAdmin, getJobsForCandidates} from '../controllers/jobs.controller.js';
+import {createJob, getAllJobsByAdmin, getJobsForCandidates , getIndividualJob} from '../controllers/jobs.controller.js';
 
 const router = express.Router();
 
@@ -15,6 +15,7 @@ router.get('/admin', isAuthenticated , isAdmin , getAllJobsByAdmin );
 
 
 //candidate jobs
-router.get('/list' , isAuthenticated , getJobsForCandidates );
+router.get('/list' , getJobsForCandidates );
+router.get('/:id' , isAuthenticated , getIndividualJob );
 
 export default router;

@@ -23,7 +23,7 @@ export const submitCandidateProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Required fields are missing");
   }
 
-  console.log(req.files);
+  
 
   let profilePhotoLocalPath = "";
   let resumeLocalPath = "";
@@ -46,17 +46,17 @@ export const submitCandidateProfile = asyncHandler(async (req, res) => {
   ) {
     resumeLocalPath = req.files.resume[0].path;
   }
-  // console.log(profilePhotoLocalPath , resumeLocalPath);
+  
 
   let urlProfilePhoto;
   let urlResume;
 
   if (profilePhotoLocalPath) {
-    urlProfilePhoto = await uploadOnCloudinary(profilePhotoLocalPath);
+    urlProfilePhoto = await uploadOnCloudinary(profilePhotoLocalPath , "image");
   }
 
   if (resumeLocalPath) {
-    urlResume = await uploadOnCloudinary(resumeLocalPath);
+    urlResume = await uploadOnCloudinary(resumeLocalPath , "raw");
   }
 
   const createdProfile = await CandidateProfileModel.create({
