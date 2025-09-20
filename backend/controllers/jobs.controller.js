@@ -1,5 +1,6 @@
 import moment from "moment";
 import JobModel from "../models/jobs.model.js";
+import ApplicationModel from "../models/application.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -80,13 +81,14 @@ export const getAllJobsByAdmin = asyncHandler(async (req, res) => {
 //FOR ALL CANDIDATES
 
 export const getJobsForCandidates = asyncHandler(async (req, res) => {
-  const candidateId = req.id;
+ 
+  
   
   const limit = parseInt(req.query.limit) || 20;
   const page = parseInt(req.query.page) || 1;
   const skip = (page - 1) * limit;
 
-  const { search = "", department, state, jobType, experienceLevel, appliedJobs = "false"} = req.query;
+  const { search = "", department, state, jobType, experienceLevel, candidateId, appliedJobs = "false" } = req.query;
 
   // ---------- Base filters ----------
   const matchStage = {};
@@ -97,8 +99,6 @@ export const getJobsForCandidates = asyncHandler(async (req, res) => {
   if (experienceLevel && experienceLevel !== "none") matchStage.experienceLevel = experienceLevel;
   if (search) matchStage.title = { $regex: search, $options: "i" };
 
-  
-
   // ---------- Aggregate pipeline ----------
   const pipeline = [
     { $match: matchStage },
@@ -106,64 +106,79 @@ export const getJobsForCandidates = asyncHandler(async (req, res) => {
     { $skip: skip },
     { $limit: limit },
 
-    // Lookup applications for this job
+    // Lookup all applications for counting
     {
       $lookup: {
         from: "applicationmodels",
-        let: { jobId: "$_id" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$job", "$$jobId"] } } },
-          { $project: { candidateApplied: 1 } },
-        ],
-        as: "applications",
+        localField: "_id",
+        foreignField: "job",
+        as: "allApplications",
       },
     },
 
-    // Count applicants
+    // Add applicants count
     {
       $addFields: {
-        applicantsCount: { $size: "$applications" },
-        hasApplied: {
-          $in: [{ $toObjectId: candidateId }, "$applications.candidateApplied"],
-        },
+        applicantsCount: { $size: "$allApplications" },
+      },
+    },
+
+    // Project only required fields (we'll add hasApplied later)
+    {
+      $project: {
+        title: 1,
+        type: 1,
+        department: 1,
+        experienceLevel: 1,
+        salaryOffered: 1,
+        salaryCurrency: 1,
+        salaryPeriod: 1,
+        isOpen: 1,
+        applicantsCount: 1,
+        createdAt: 1,
       },
     },
   ];
 
-  // ---------- Handle appliedJobs filter ----------
+  const jobsResult = await JobModel.aggregate(pipeline);
+
+  // Get user's applications to determine hasApplied status
+  const userApplications = await ApplicationModel.find({ 
+    candidateApplied: candidateId 
+  }).select('job');
+  
+  
+  
+  const appliedJobIds = new Set(userApplications.map(app => app.job.toString()));
+  
+  
+  
+  // Add hasApplied field to each job
+  const jobsWithAppliedStatus = jobsResult.map(job => ({
+    ...job,
+    hasApplied: appliedJobIds.has(job._id.toString())
+  }));
+
+  // Filter based on appliedJobs parameter
+  let filteredJobs = jobsWithAppliedStatus;
+  
+  
   if (appliedJobs === "true") {
-    pipeline.push({ $match: { hasApplied: true } });
+    filteredJobs = jobsWithAppliedStatus.filter(job => job.hasApplied === true);
+   
   } else if (appliedJobs === "false") {
-    pipeline.push({ $match: { hasApplied: false } });
+    filteredJobs = jobsWithAppliedStatus.filter(job => job.hasApplied === false);
+    
   }
 
-  // ---------- Project only required fields ----------
-  pipeline.push({
-    $project: {
-      title: 1,
-      type: 1,
-      department: 1,
-      experienceLevel: 1,
-      salaryOffered: 1,
-      salaryCurrency: 1,
-      salaryPeriod: 1,
-      isOpen: 1,
-      applicantsCount: 1,
-      hasApplied: 1,
-      createdAt: 1,
-    },
-  });
-
-  const jobs = await JobModel.aggregate(pipeline);
-
-  // Format dates
-  const formattedJobs = jobs.map((job) => ({
+  // Format dates for the final result
+  const formattedJobs = filteredJobs.map((job) => ({
     ...job,
     createdAtRelative: moment(job.createdAt).fromNow(),
     createdAtFormatted: moment(job.createdAt).format("D MMM YYYY"),
   }));
 
-  // For pagination
+  // For pagination (note: this count might not be exact after filtering, but it's close enough)
   const totalJobs = await JobModel.countDocuments(matchStage);
 
   res.status(200).json(
@@ -176,4 +191,22 @@ export const getJobsForCandidates = asyncHandler(async (req, res) => {
     })
   );
 });
+
+
+export const getIndividualJob = asyncHandler(async (req, res) => {
+  const jobId = req.params?.id;
+  const userID = req.id;
+  let isAlreadyApplied = false;
+
+  const isApplicationPresent = await ApplicationModel.findOne({ job : jobId , candidateApplied : userID });
+
+  if (isApplicationPresent) isAlreadyApplied = true;
+
+  const job = await JobModel.findById(jobId);
+
+  if (!job) throw new ApiError(404, "Job not found!");
+
+  res.status(200).json(new ApiResponse(200, "Job fetched successfully!", { job , isAlreadyApplied }));
+
+})
 

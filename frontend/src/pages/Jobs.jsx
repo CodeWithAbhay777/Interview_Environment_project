@@ -11,6 +11,7 @@ import { useGetAllJobs } from '@/hooks/queries/useGetAllJobs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { useSelector } from 'react-redux';
 
 
 const jobList = [
@@ -32,9 +33,10 @@ const Jobs = () => {
   const limit = useRef(20);
   const [search, setSearch] = useState("");
 
-
+  const { user, isAuthenticated } = useSelector((store) => store.auth);
 
   //API CALL
+
   const { data: jobsData, isLoading, isError, refetch } = useGetAllJobs({
     page,
     limit: limit.current,
@@ -43,6 +45,7 @@ const Jobs = () => {
     experienceLevel,
     department,
     state,
+    candidateId : user?._id,
     appliedJobs
   });
 
@@ -210,10 +213,12 @@ const Jobs = () => {
                       </div>
                     </div>
 
+                    { user?.role === "candidate" && isAuthenticated && (<div id="right" className=" flex-1 flex justify-center items-center">
+                      <Link to={`/jobs/${job._id}`} ><Eye className="text-[#5b30a6] hover:text-[#b18af0] h-8 w-8" /></Link>
+                    </div>)
 
-                    <div id="right" className=" flex-1 flex justify-center items-center">
-                      <Link to={`/admin/dashboard/jobs/${job._id}`} ><Eye className="text-[#5b30a6] hover:text-[#b18af0] h-8 w-8" /></Link>
-                    </div>
+                    }
+                    
                   </div>
 
                 </>

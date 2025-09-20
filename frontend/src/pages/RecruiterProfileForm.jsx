@@ -35,7 +35,7 @@ import { validatePhoneNumber } from "@/utils/phoneValidation";
 
 const RecruiterProfileForm = () => {
   const { user, isAuthenticated } = useSelector((store) => store.auth);
-  // const {userProfile} = useSelector(store => store.profile);
+  
   const [expertiseInput, setExpertiseInput] = useState("");
   const [otp, setOtp] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
