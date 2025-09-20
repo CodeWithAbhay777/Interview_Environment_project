@@ -20,6 +20,18 @@ const applicationSchema = mongoose.Schema({
     default : 'applied'
    },
 
+   coverLetter : {
+      type : String,
+      default : '',
+      required : false,
+   },
+
+   applicationResume : {
+      type : String,
+      default : '',
+      required : false,
+   }
+
    
 },{timestamps: true});
 
