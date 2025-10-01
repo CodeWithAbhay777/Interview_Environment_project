@@ -11,6 +11,7 @@ import profileRoutes from './routes/profile.route.js';
 import {errorHandler} from './middlewares/errorHandler.middleware.js';
 import jobRoutes from './routes/jobs.route.js';
 import applicationRoutes from './routes/application.route.js';
+import interviewRoutes from './routes/interview.route.js';
 
 
 
@@ -42,6 +43,7 @@ redisConnection();
   app.use('/api/v1/profile', profileRoutes); 
   app.use('/api/v1/jobs' , jobRoutes);
   app.use('/api/v1/application' , applicationRoutes);
+  app.use('/api/v1/interview' , interviewRoutes);
   
 
 

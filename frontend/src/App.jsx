@@ -24,6 +24,9 @@ import DashboardJobs from "./components/admin/DashboardJobs";
 import ProtectedRouteLayout from "./layout/ProtectedRouteLayout";
 import CreateJobsForm from "./components/admin/CreateJobsForm";
 
+import ManageJob from "./components/admin/ManageJob";
+import ManageInterviewsOfJob from "./components/admin/ManageInterviewsOfJob";
+
 const appRouter = createBrowserRouter([
   {
     path: "/",
@@ -143,6 +146,14 @@ const appRouter = createBrowserRouter([
       {
         path : "jobs/create",
         element: <CreateJobsForm />
+      },
+      {
+        path: "jobs/:id",
+        element: <ManageJob />,
+      },
+      {
+        path: "jobs/:id/interviews",
+        element: <ManageInterviewsOfJob />
       }
     ],
   },
