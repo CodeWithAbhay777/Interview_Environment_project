@@ -24,10 +24,14 @@ import { Calendar } from "../ui/calendar";
 import { toast } from "sonner";
 import { useSelector } from "react-redux";
 import { jobPost } from "@/api/jobs/jobPost";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { validateJobData } from "@/utils/jobValidation";
+import { useNavigate } from "react-router-dom";
 
 const CreateJobsForm = () => {
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useSelector((store) => store.auth);
   const [skillInput, setSkillInput] = useState("");
   const [openDate, setOpenDate] = useState(false);
@@ -81,7 +85,9 @@ const CreateJobsForm = () => {
         applicationDeadline: "",
       });
 
-      naviagate('/admin/dashboard/jobs');
+      queryClient.invalidateQueries({ queryKey: ['adminJobs'] });
+
+      navigate('/admin/dashboard/jobs');
     },
 
     onError: (err) => {
