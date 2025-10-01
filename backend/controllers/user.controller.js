@@ -184,3 +184,53 @@ export const me = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "User data fetched successfully", user));
 });
+
+export const getAllInterviewers = asyncHandler(async (_, res) => {
+  // Get all users with role 'recruiter' or 'admin' who have completed profiles
+  const interviewers = await UserModel.aggregate([
+    {
+      $match: {
+        role: { $in: ['recruiter', 'admin'] },
+        isProfileComplete: true
+      }
+    },
+    {
+      $lookup: {
+        from: 'interviewerprofilemodels',
+        localField: '_id',
+        foreignField: 'user_id',
+        as: 'profile'
+      }
+    },
+    {
+      $unwind: '$profile'
+    },
+    {
+      $match: {
+        'profile.isAvailableForInterview': true
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        
+    
+        fullname: '$profile.fullname',
+        designation: '$profile.designation',
+        expertiseAreas: '$profile.expertiseAreas',
+        totalExperience: '$profile.totalExperience',
+        profilePhoto: '$profile.profilePhoto',
+        preferredInterviewType: '$profile.preferredInterviewType',
+        
+      }
+    },
+    {
+      $sort: { 'fullname': 1 }
+    }
+  ]);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Interviewers fetched successfully", interviewers));
+});

@@ -30,6 +30,12 @@ const interviewSchema = mongoose.Schema({
     default: Date.now(),
    },
 
+   notes : {
+      type : String,
+      default : "",
+      
+   },
+
    status : {
     type : String,
     enum : ['scheduled' , 'completed' , 'cancelled'],
