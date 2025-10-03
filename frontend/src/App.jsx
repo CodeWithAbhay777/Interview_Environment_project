@@ -26,6 +26,10 @@ import CreateJobsForm from "./components/admin/CreateJobsForm";
 
 import ManageJob from "./components/admin/ManageJob";
 import ManageInterviewsOfJob from "./components/admin/ManageInterviewsOfJob";
+import DashboardInterviews from "./components/admin/DashboardInterviews";
+import DashboardFeedback from "./components/admin/DashboardFeedback";
+import CandidateUpcomingInterviews from "./pages/CandidateUpcomingInterviews";
+import RecruiterUpcomingInterviews from "./pages/RecruiterUpcomingInterviews";
 
 const appRouter = createBrowserRouter([
   {
@@ -60,6 +64,14 @@ const appRouter = createBrowserRouter([
       {
         path: "browse",
         element: <Browse />,
+      },
+      {
+        path: "candidate/upcoming-interviews",
+        element: <CandidateUpcomingInterviews />,
+      },
+      {
+        path: "recruiter/upcoming-interviews",
+        element: <RecruiterUpcomingInterviews />,
       },
       {
         path: "profile",
@@ -154,6 +166,18 @@ const appRouter = createBrowserRouter([
       {
         path: "jobs/:id/interviews",
         element: <ManageInterviewsOfJob />
+      }, 
+      // interviews
+      {
+        path : "interviews",
+        element : <DashboardInterviews />
+
+      }
+      // feedback
+      ,
+      {
+        path: "feedbacks",
+        element: <DashboardFeedback />
       }
     ],
   },

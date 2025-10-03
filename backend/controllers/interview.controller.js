@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
+import moment from "moment";
 
 export const scheduleInterview = asyncHandler(async (req, res) => {
   const {
@@ -84,8 +85,34 @@ export const scheduleInterview = asyncHandler(async (req, res) => {
 });
 
 
-
 export const getAllInterviews = asyncHandler(async (req, res) => {
+  let { page = 1, limit = 20  } = req.query;
+  page = parseInt(page) < 1 ? 1 : parseInt(page);
+  limit = parseInt(limit) < 1 ? 10 : parseInt(limit);
+  const skip = (page - 1) * limit;
+
+  const interviews = await InterviewModel.find()
+    .skip(skip)
+    .limit(limit)
+    .populate("candidateSelected", "username email")
+    .populate("interviewerAssigned", "username email")
+    .populate("job", "_id title department");
+
+  const totalInterviews = await InterviewModel.countDocuments();
+  const totalPages = Math.ceil(totalInterviews / limit);
+
+  return res.status(200).json(new ApiResponse(200, "Interviews fetched successfully", {
+    interviews,
+    totalInterviews,
+    totalPages,
+    currentPage: page,
+    limit
+  }));
+});
+
+
+
+export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
   let { page = 1, limit = 10, status = "all", interviewType = "all", jobId } = req.query;
 
   page = parseInt(page) < 1 ? 1 : parseInt(page);
@@ -265,3 +292,65 @@ export const getInterviewById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Interview fetched successfully", interview));
 });
+
+
+
+// Get all interviews for a specific candidate
+export const getAllCandidateInterviews = asyncHandler(async (req, res) => {
+  const candidateId = req.id; // Get candidate ID from authenticated user
+  const {status = "all"} = req.query;
+  
+  console.log("Candidate ID:", candidateId, "Status:", status);
+
+  if (!candidateId) {
+    throw new ApiError(400, "Candidate ID is required");
+  }
+
+  // Build match criteria
+  let matchCriteria = { candidateSelected: candidateId };
+  if(status !== "all" && ['scheduled', 'completed', 'cancelled'].includes(status)){
+    matchCriteria.status = status;
+  }
+
+  const interviews = await InterviewModel.find(matchCriteria)
+    .populate('job', 'title department')
+    .sort({ scheduledAt: -1 });
+    
+  
+  const formattedInterviews = interviews.map(interview => {
+    const interviewObj = interview.toObject();
+    interviewObj.scheduledAt = moment
+      .utc(interview.scheduledAt)
+      .local()
+      .format("YYYY-MM-DD HH:mm");
+    return interviewObj;
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Interviews fetched successfully", formattedInterviews));
+});
+
+
+export const getAllRecruiterInterviews = asyncHandler(async (req, res) => {
+  const recruiterId = req.id; // Get recruiter ID from authenticated user
+  const {status = "all"} = req.query;
+  if (!recruiterId) {
+    throw new ApiError(400, "Recruiter ID is required");
+  }
+
+  // Build match criteria
+  let matchCriteria = { interviewerAssigned: recruiterId };
+  if(status !== "all" && ['scheduled', 'completed', 'cancelled'].includes(status)){
+    matchCriteria.status = status;
+  }
+
+  const interviews = await InterviewModel.find(matchCriteria)
+    .populate('job', 'title department')
+    .populate('candidateSelected', 'username email')
+    .sort({ scheduledAt: -1 });
+
+  res.status(200).json(new ApiResponse(200, "Interviews fetched successfully", interviews));
+
+
+})
