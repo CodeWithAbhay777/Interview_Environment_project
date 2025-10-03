@@ -259,7 +259,7 @@ export const getJobInfoByAdmin = asyncHandler(async (req, res) => {
   const facet = result[0] || { data: [], totalCount: [] };
   const applications = facet.data || [];
   const totalApplications = (facet.totalCount[0] && facet.totalCount[0].count) ? facet.totalCount[0].count : 0;
-  const totalPages = Math.ceil(totalApplications / page) || 0;
+  const totalPages = Math.ceil(totalApplications / limit) || 0;
 
   res.status(200).json(new ApiResponse(200, "Job applications fetched successfully", {
     
