@@ -44,7 +44,11 @@ redisConnection();
   app.use('/api/v1/jobs' , jobRoutes);
   app.use('/api/v1/application' , applicationRoutes);
   app.use('/api/v1/interview' , interviewRoutes);
-  
+
+
+
+  //jobs import
+  import "./Jobs/index.js";
 
 
 //Error handling resposne

@@ -186,7 +186,7 @@ export const me = asyncHandler(async (req, res) => {
 });
 
 export const getAllInterviewers = asyncHandler(async (_, res) => {
-  // Get all users with role 'recruiter' or 'admin' who have completed profiles
+  
   const interviewers = await UserModel.aggregate([
     {
       $match: {

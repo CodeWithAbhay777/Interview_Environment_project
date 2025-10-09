@@ -1,6 +1,6 @@
 import { sendEmail } from "../utils/sendEmail.js";
 
-export const sendVerificationEmail = async (email, verificationCode) => {
+export const sendVerificationEmail = (email, verificationCode) => {
     const mailOptions = {
         to: email,
         subject: 'Email Verification Code for JOBIFY',
@@ -18,5 +18,7 @@ export const sendVerificationEmail = async (email, verificationCode) => {
         `
     };
 
-    return await sendEmail(mailOptions);
+    return mailOptions;
+
+    // return await sendEmail(mailOptions);
 };

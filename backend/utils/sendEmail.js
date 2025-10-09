@@ -19,7 +19,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
         };
 
         const result = await mailer.sendMail(mailOptions);
-        console.log('Email sent successfully:', result.response);
+        // console.log('Email sent successfully:', result.response);
         return true;
     } catch (error) {
         console.error('Error sending email:', error);
