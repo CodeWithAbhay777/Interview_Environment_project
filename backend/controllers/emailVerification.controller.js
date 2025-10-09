@@ -4,6 +4,8 @@ import { sendVerificationEmail } from '../templates/emailVerificationCode.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { sendEmail } from '../utils/sendEmail.js';
+import { emailQueue, emailQueueName } from '../Jobs/sendEmailJob.js';
 
 export const sendVerificationCode = asyncHandler(async (req, res) => {
     
@@ -20,11 +22,11 @@ export const sendVerificationCode = asyncHandler(async (req, res) => {
     await redis.set(`verificationCode:${email}`, verificationCode, 'EX', 120);
     
     // Send verification email
-    const emailSent = await sendVerificationEmail(email, verificationCode);
-    
-    if (!emailSent) {
-        throw new ApiError(500, "Failed to send verification code email");
-    }
+    const mailOptions = sendVerificationEmail(email, verificationCode);
+
+    await emailQueue.add(emailQueueName, mailOptions);
+
+   
 
     return res.status(200).json(
         new ApiResponse(200, "Verification code sent successfully")

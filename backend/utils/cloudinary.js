@@ -2,6 +2,7 @@ import {v2 as cloudinary} from 'cloudinary';
 
 import fs from "fs";
 import path from "path";
+import { no } from 'zod/v4/locales';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,7 +22,9 @@ export const uploadOnCloudinary = async (localFilePath, resourceType = "auto") =
       // invalidate: true,
     });
 
-    fs.unlinkSync(normalizedPath);
+   
+    console.log(localFilePath)
+    fs.unlinkSync(localFilePath);
     
     return response.url;
   } catch (error) {
