@@ -12,14 +12,20 @@ const ProtectedRouteLayout = ({ children }) => {
     navigate("/login");
   }
 
-  if (!user.isProfileComplete){
+  if (!user?.isProfileComplete){
     toast.info('Create profile first to move further');
     //Move to prfile completion pg
+    if (user?.role === "candidate") navigate("/candidate-profile-form");
+    else if (user?.role === "recruiter" || user?.role === "admin") navigate("/recruiter-profile-form");
+    else navigate("/login");
   }
 
-  if (!user.isEmailVerified){
+  if (!user?.isEmailVerified){
     toast.info('Verify your email first to move further');
     // move to verificatin pg
+    if (user?.role === "candidate") navigate("/candidate-profile-form");
+    else if (user?.role === "recruiter" || user?.role === "admin") navigate("/recruiter-profile-form");
+    else navigate("/login");
   }
 
   return children;

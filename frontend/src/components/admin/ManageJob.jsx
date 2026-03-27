@@ -886,7 +886,8 @@ const ManageJob = () => {
                       mode="single"
                       selected={scheduleDate}
                       onSelect={setScheduleDate}
-                      disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
+                      // I want interviewer can schedule for today and future dates only
+                      // disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
                       initialFocus
                     />
                   </PopoverContent>

@@ -22,10 +22,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useGetRecruiterInterviews } from '../hooks/queries/useGetRecruiterInterviews';
+import { useDispatch } from 'react-redux';
+import { setInterviewSessionData } from '@/redux/interviewSessionDataSlice';
+import { useNavigate } from 'react-router-dom';
+import { useMutation } from "@tanstack/react-query";
+import { getInterviewToken } from '@/api/interview/getInterviewToken';
+
+
 
 const RecruiterUpcomingInterviews = () => {
   const [statusFilter, setStatusFilter] = useState('all');
-
+  
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   // Using TanStack Query to fetch recruiter interviews
   const { 
     data: interviewsData, 
@@ -33,6 +42,25 @@ const RecruiterUpcomingInterviews = () => {
     error, 
     refetch 
   } = useGetRecruiterInterviews({ status: statusFilter });
+
+   const interviewTokenMutation = useMutation({
+    mutationFn: getInterviewToken,
+    onSuccess: (data) => {
+      console.log("Interview token data : ", data);
+      //put this data in session storage
+      sessionStorage.setItem('sessionData', JSON.stringify(data.data));
+      //dispatch to redux store as well
+      dispatch(setInterviewSessionData({ sessionData: data.data }));
+      navigate('/interview/room');
+    },
+    onError: (error) => {
+      console.log("Error while getting interview token : ", error);
+      toast.error(error.message || "Getting interview token : Something went wrong");
+    },
+  });
+
+
+
 
   const interviews = interviewsData?.data || [];
 
@@ -87,7 +115,7 @@ const RecruiterUpcomingInterviews = () => {
     try {
       const interviewTime = parseISO(scheduledAt);
       const now = new Date();
-      const endTime = addHours(interviewTime, 2); // Assuming 2-hour interview duration
+      const endTime = addHours(interviewTime, 3360); // Assuming 3360-minute interview duration
       
       return isAfter(now, interviewTime) && isBefore(now, endTime);
     } catch {
@@ -96,7 +124,7 @@ const RecruiterUpcomingInterviews = () => {
   };
 
   const canStartInterview = (status, scheduledAt) => {
-    return status?.toLowerCase() === 'scheduled' && (isInterviewLive(scheduledAt) || isAfter(new Date(), parseISO(scheduledAt)));
+    return status?.toLowerCase() === 'scheduled' && isInterviewLive(scheduledAt);
   };
 
   const getStats = () => {
@@ -334,11 +362,10 @@ const RecruiterUpcomingInterviews = () => {
                             ? 'bg-[#6A38C2] hover:bg-[#5b30a6] text-white'
                             : 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         }`}
-                        disabled={interview.status !== 'scheduled'}
+                        disabled={!canStartInterview(interview.status, interview.scheduledAt)}
                         onClick={() => {
                           if (interview.status === 'scheduled') {
-                            // Future: Handle start interview
-                            console.log('Starting interview:', interview._id);
+                            interviewTokenMutation.mutate({ interviewId: interview._id });
                           }
                         }}
                       >
@@ -356,6 +383,7 @@ const RecruiterUpcomingInterviews = () => {
                             className="flex-1 text-xs"
                             onClick={() => {
                               // Future: Handle reschedule
+                              toast.info('Reschedule feature coming soon!');
                               console.log('Reschedule interview:', interview._id);
                             }}
                           >
@@ -368,6 +396,7 @@ const RecruiterUpcomingInterviews = () => {
                             className="flex-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => {
                               // Future: Handle cancel
+                              toast.info('Cancel feature coming soon!');
                               console.log('Cancel interview:', interview._id);
                             }}
                           >

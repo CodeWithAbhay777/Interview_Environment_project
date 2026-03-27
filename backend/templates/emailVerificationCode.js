@@ -1,4 +1,4 @@
-import { sendEmail } from "../utils/sendEmail.js";
+
 
 export const sendVerificationEmail = (email, verificationCode) => {
     const mailOptions = {
@@ -20,5 +20,5 @@ export const sendVerificationEmail = (email, verificationCode) => {
 
     return mailOptions;
 
-    // return await sendEmail(mailOptions);
+    
 };

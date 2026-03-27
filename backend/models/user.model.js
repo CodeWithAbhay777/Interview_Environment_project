@@ -65,6 +65,7 @@ userSchema.methods.isPasswordCorrect = async function(password) {
 userSchema.methods.generateRefreshToken = function(){
     return jwt.sign({
         userId : this._id,
+        
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
