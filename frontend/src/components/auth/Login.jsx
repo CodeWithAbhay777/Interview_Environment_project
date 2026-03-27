@@ -33,29 +33,34 @@ const Login = () => {
     mutationKey: ["loginData"],
     mutationFn: loginUser,
     onSuccess: (data) => {
+
       if (data) {
         dispatch(setUser({ user: data.data, isAuthenticated: true }));
       }
       toast.success(`User login successfully!`);
 
       navigate("/");
+    
     },
 
     onError: (err) => {
-      setInput({ emailOrUsername: "", password: "", role: "" });
+      // setInput({ emailOrUsername: "", password: "", role: "" });
+      console.log(err);
 
       toast.error(err.message || "Login user : Something went wrong");
     },
   });
 
   const submitHandler = async (e) => {
+   
     e.preventDefault();
 
     if (!input.emailOrUsername || !input.password || !input.role) {
       toast.error("All fields are required!");
       return;
     }
-    console.log(input);
+   
+   
     loginMutation.mutate(input);
   };
   useEffect(() => {
@@ -63,6 +68,8 @@ const Login = () => {
       navigate("/");
     }
   }, []);
+ 
+
   return (
     <div>
       <div className="flex items-center justify-center max-w-7xl mx-auto">

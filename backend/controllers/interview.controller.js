@@ -7,6 +7,9 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose from "mongoose";
 import moment from "moment";
+import { sendInterviewInfoToInterviewer } from "../templates/interviewInfoToInterviewer.js";
+import { sendInterviewInfoEmailToCandidate } from "../templates/interviewInfoToCandidate.js";
+import { emailQueue, emailQueueName } from "../Jobs/sendEmailJob.js";
 
 export const scheduleInterview = asyncHandler(async (req, res) => {
   const {
@@ -24,7 +27,7 @@ export const scheduleInterview = asyncHandler(async (req, res) => {
   }
 
   // Check if job exists
-  const jobExists = await JobModel.findById(job);
+  const jobExists = await JobModel.findById(job).select('title department type experienceLevel');
   if (!jobExists) {
     throw new ApiError(404, "Job not found");
   }
@@ -35,9 +38,13 @@ export const scheduleInterview = asyncHandler(async (req, res) => {
     candidateApplied: candidateSelected
   });
 
+  
+
   if (!application) {
     throw new ApiError(404, "Application not found for this candidate and job");
   }
+
+  const candidateInfo = await UserModel.findById(candidateSelected).select('username email');
 
 
 
@@ -71,6 +78,7 @@ export const scheduleInterview = asyncHandler(async (req, res) => {
   if (!interview) {
     throw new ApiError(500, "Failed to schedule interview");
   }
+  
 
   // Update application status to 'interview-scheduled'
   await ApplicationModel.findByIdAndUpdate(
@@ -78,6 +86,31 @@ export const scheduleInterview = asyncHandler(async (req, res) => {
     { status: 'interview-scheduled' },
     { new: true }
   );
+
+  //send mail to the candidate and interviewer about the scheduled interview
+  const getCandidatePayloadForEmail = sendInterviewInfoEmailToCandidate(
+    candidateInfo.email,
+    candidateInfo.username,
+    jobExists.title,
+    jobExists.department,
+    jobExists.type,
+    jobExists.experienceLevel,
+    interview.scheduledAt
+  );
+
+  const getInterviewerPayloadForEmail = sendInterviewInfoToInterviewer(
+    interviewer.email,
+    interviewer.username,
+    jobExists.title,
+    jobExists.department,
+    jobExists.type,
+    jobExists.experienceLevel,
+    interview.scheduledAt
+  );
+
+  await emailQueue.add(emailQueueName , getCandidatePayloadForEmail);
+  await emailQueue.add(emailQueueName , getInterviewerPayloadForEmail);
+  
 
   return res
     .status(201)
@@ -353,4 +386,4 @@ export const getAllRecruiterInterviews = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, "Interviews fetched successfully", interviews));
 
 
-})
+});

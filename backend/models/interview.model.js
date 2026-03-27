@@ -46,7 +46,18 @@ const interviewSchema = mongoose.Schema({
     type : Boolean,
     default : false,
    },
-   
+
+   isInterviewerJoined : {
+      type : Boolean,
+      default : false,
+   },
+
+   roomId : {
+      type : String,
+      required : false,
+      default : "",
+   }
+
 });
 
 const InterviewModel = mongoose.model("InterviewModel", interviewSchema);

@@ -1,0 +1,606 @@
+/* Professional Video Call Styles - Enhanced Layout */
+
+/* ===========================
+   MAIN CONTAINER
+   =========================== */
+.str-video__call-content {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ===========================
+   GRID LAYOUT - MAXIMIZED SPACE
+   =========================== */
+.str-video__paginated-grid-layout {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.str-video__paginated-grid-layout__wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+}
+
+/* 1 participant - maximized */
+.str-video__paginated-grid-layout__wrapper[data-participant-count="1"] {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.str-video__paginated-grid-layout__wrapper[data-participant-count="1"] > * {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+/* 2 participants - side by side, full space */
+.str-video__paginated-grid-layout__wrapper[data-participant-count="2"] {
+  flex-direction: row !important;
+  gap: 8px !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.str-video__paginated-grid-layout__wrapper[data-participant-count="2"] > * {
+  flex: 1 !important;
+  width: calc(50% - 4px) !important;
+  height: 100% !important;
+  min-width: 0 !important;
+}
+
+/* 3-4 participants - 2x2 grid, maximized */
+.str-video__paginated-grid-layout__wrapper[data-participant-count="3"],
+.str-video__paginated-grid-layout__wrapper[data-participant-count="4"] {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  align-content: center !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.str-video__paginated-grid-layout__wrapper[data-participant-count="3"] > *,
+.str-video__paginated-grid-layout__wrapper[data-participant-count="4"] > * {
+  flex: 0 0 calc(50% - 4px) !important;
+  width: calc(50% - 4px) !important;
+  height: calc(50% - 4px) !important;
+  max-width: calc(50% - 4px) !important;
+  min-width: 0 !important;
+}
+
+/* ===========================
+   PARTICIPANT TILES - ENHANCED DESIGN
+   =========================== */
+.str-video__participant-view {
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%) !important;
+  border: 1px solid #2a2a2a !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.str-video__participant-view:hover {
+  border-color: #3a3a3a !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Video element inside participant view */
+.str-video__participant-view video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* ===========================
+   PARTICIPANT MENU/DROPDOWN - DARK THEME
+   =========================== */
+.str-video__participant-menu,
+.str-video__menu-container,
+.str-video__generic-menu__button,
+.str-video__participant-details__menu {
+  background: rgba(26, 26, 26, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(106, 56, 194, 0.3) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+  padding: 8px !important;
+}
+
+.str-video__participant-menu button,
+.str-video__menu-container button,
+.str-video__generic-menu__button button {
+  background: transparent !important;
+  color: white !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  text-align: left !important;
+}
+
+.str-video__participant-menu button:hover,
+.str-video__menu-container button:hover,
+.str-video__generic-menu__button button:hover {
+  background: rgba(106, 56, 194, 0.3) !important;
+  color: white !important;
+  transform: translateX(2px) !important;
+}
+
+/* Menu items */
+.str-video__menu-item {
+  color: white !important;
+  background: transparent !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+}
+
+.str-video__menu-item:hover {
+  background: rgba(106, 56, 194, 0.3) !important;
+  color: white !important;
+}
+
+/* Dropdown trigger button */
+.str-video__participant-view__menu-toggle,
+.str-video__generic-menu__button {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  color: white !important;
+  padding: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.str-video__participant-view__menu-toggle:hover,
+.str-video__generic-menu__button:hover {
+  background: rgba(106, 56, 194, 0.5) !important;
+  border-color: rgba(106, 56, 194, 0.5) !important;
+  transform: scale(1.05) !important;
+}
+
+/* ===========================
+   AVATAR - CAMERA OFF STATE
+   =========================== */
+.str-video__avatar,
+.str-video__participant-view__avatar {
+  width: 100px !important;
+  height: 100px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 40px !important;
+  font-weight: 600 !important;
+  color: white !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  border: 3px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ===========================
+   SPEAKER LAYOUT - BEAUTIFUL DESIGN
+   =========================== */
+.str-video__speaker-layout {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Main spotlight video container */
+.str-video__speaker-layout__wrapper {
+  flex: 1 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  background: #0a0a0a !important;
+}
+
+/* Active speaker spotlight */
+.str-video__speaker-layout__spotlight {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.2s ease !important;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%) !important;
+}
+
+/* Participants bar at bottom */
+.str-video__speaker-layout__participants-bar {
+  height: 140px !important;
+  width: 100% !important;
+  display: flex !important;
+  gap: 10px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding: 8px 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  scroll-behavior: smooth !important;
+}
+
+/* Participant tiles in bottom bar */
+.str-video__speaker-layout__participants-bar .str-video__participant-view {
+  width: 220px !important;
+  height: 124px !important;
+  min-width: 220px !important;
+  flex-shrink: 0 !important;
+  border-radius: 12px !important;
+  border: 2px solid #2a2a2a !important;
+  transition: all 0.25s ease !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+/* Hover effect on participant tiles */
+.str-video__speaker-layout__participants-bar .str-video__participant-view:hover {
+  border-color: #3a3a3a !important;
+  transform: scale(1.05) translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+  z-index: 10 !important;
+}
+
+/* Active speaker in bottom bar */
+.str-video__speaker-layout__participants-bar .str-video__participant-view--active-speaker {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Avatar in bottom bar */
+.str-video__speaker-layout__participants-bar .str-video__avatar {
+  width: 70px !important;
+  height: 70px !important;
+  font-size: 28px !important;
+}
+
+/* Custom scrollbar for participant bar */
+.str-video__speaker-layout__participants-bar::-webkit-scrollbar {
+  height: 8px !important;
+}
+
+.str-video__speaker-layout__participants-bar::-webkit-scrollbar-track {
+  background: rgba(26, 26, 26, 0.5) !important;
+  border-radius: 4px !important;
+  margin: 0 4px !important;
+}
+
+.str-video__speaker-layout__participants-bar::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #6A38C2 0%, #5b30a6 100%) !important;
+  border-radius: 4px !important;
+  transition: background 0.2s ease !important;
+}
+
+.str-video__speaker-layout__participants-bar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #5b30a6 0%, #4a2685 100%) !important;
+}
+
+/* ===========================
+   PARTICIPANT INFO OVERLAY - ENHANCED
+   =========================== */
+.str-video__participant-details {
+  position: absolute !important;
+  bottom: 12px !important;
+  left: 12px !important;
+  right: 12px !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  padding: 10px 14px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  z-index: 10 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.2s ease !important;
+}
+
+.str-video__participant-details:hover {
+  background: rgba(0, 0, 0, 0.95) !important;
+  transform: translateY(-2px) !important;
+}
+
+.str-video__participant-details__name {
+  color: white !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  letter-spacing: 0.3px !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Audio/Video mute indicators */
+.str-video__participant-details__icons {
+  display: flex !important;
+  gap: 6px !important;
+}
+
+.str-video__icon {
+  width: 22px !important;
+  height: 22px !important;
+  color: white !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.str-video__icon:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  transform: scale(1.1) !important;
+}
+
+/* ===========================
+   ACTIVE SPEAKER HIGHLIGHT - ENHANCED
+   =========================== */
+.str-video__participant-view--active-speaker {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3), 
+              0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Active speaker badge */
+.str-video__participant-view--active-speaker::after {
+  content: '🎙️' !important;
+  position: absolute !important;
+  top: 12px !important;
+  right: 12px !important;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.4) !important;
+  z-index: 15 !important;
+  animation: pulse-badge 2s ease-in-out infinite !important;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* ===========================
+   SCREEN SHARE - ENHANCED
+   =========================== */
+.str-video__screen-share-overlay {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  border: 2px solid #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), 
+              0 8px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+.str-video__screen-share-overlay::before {
+  content: '📺 Screen Sharing' !important;
+  position: absolute !important;
+  top: 16px !important;
+  left: 16px !important;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: white !important;
+  padding: 8px 16px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5) !important;
+  z-index: 20 !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* ===========================
+   MOBILE RESPONSIVE - STACKED ON MOBILE
+   =========================== */
+@media (max-width: 768px) {
+  /* Stack videos vertically on mobile */
+  .str-video__paginated-grid-layout__wrapper {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="2"] {
+    flex-direction: column !important;
+  }
+
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="2"] > * {
+    width: 100% !important;
+    height: calc(50% - 4px) !important;
+    flex: 1 !important;
+  }
+
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="3"] > *,
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="4"] > * {
+    flex: 0 0 calc(50% - 4px) !important;
+    width: calc(50% - 4px) !important;
+    height: calc(50% - 4px) !important;
+  }
+
+  .str-video__participant-view {
+    border-radius: 10px !important;
+  }
+
+  .str-video__avatar {
+    width: 70px !important;
+    height: 70px !important;
+    font-size: 28px !important;
+  }
+
+  .str-video__participant-details {
+    bottom: 8px !important;
+    left: 8px !important;
+    right: 8px !important;
+    padding: 8px 12px !important;
+  }
+
+  .str-video__participant-details__name {
+    font-size: 13px !important;
+  }
+
+  .str-video__icon {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Speaker layout mobile */
+  .str-video__speaker-layout {
+    gap: 8px !important;
+  }
+
+  .str-video__speaker-layout__participants-bar {
+    height: 100px !important;
+    gap: 8px !important;
+  }
+
+  .str-video__speaker-layout__participants-bar .str-video__participant-view {
+    width: 160px !important;
+    height: 90px !important;
+    min-width: 160px !important;
+  }
+
+  .str-video__speaker-layout__participants-bar .str-video__avatar {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .str-video__paginated-grid-layout__wrapper {
+    gap: 6px !important;
+  }
+
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="2"] > * {
+    height: calc(50% - 3px) !important;
+  }
+
+  .str-video__avatar {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 24px !important;
+  }
+
+  .str-video__participant-details {
+    bottom: 6px !important;
+    left: 6px !important;
+    right: 6px !important;
+    padding: 6px 10px !important;
+  }
+
+  .str-video__participant-details__name {
+    font-size: 12px !important;
+  }
+
+  .str-video__icon {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Speaker layout small mobile */
+  .str-video__speaker-layout__participants-bar {
+    height: 80px !important;
+  }
+
+  .str-video__speaker-layout__participants-bar .str-video__participant-view {
+    width: 130px !important;
+    height: 73px !important;
+    min-width: 130px !important;
+  }
+
+  .str-video__speaker-layout__participants-bar .str-video__avatar {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+  }
+}
+
+/* ===========================
+   TABLET LANDSCAPE - OPTIMIZED
+   =========================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="2"] {
+    flex-direction: row !important;
+    gap: 8px !important;
+  }
+
+  .str-video__paginated-grid-layout__wrapper[data-participant-count="2"] > * {
+    width: calc(50% - 4px) !important;
+    height: 100% !important;
+  }
+
+  .str-video__speaker-layout__participants-bar {
+    height: 120px !important;
+  }
+
+  .str-video__speaker-layout__participants-bar .str-video__participant-view {
+    width: 190px !important;
+    height: 107px !important;
+    min-width: 190px !important;
+  }
+}
+
+/* ===========================
+   CUSTOM CHAT SCROLLBAR
+   =========================== */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

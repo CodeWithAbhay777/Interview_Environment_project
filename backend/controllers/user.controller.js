@@ -36,7 +36,7 @@ export const register = asyncHandler(async (req, res) => {
     email,
     password,
     role,
-    isVerified: false,
+    isEmailVerified: false,
   });
 
   if (!savedData) {
@@ -114,6 +114,7 @@ export const login = asyncHandler(async (req, res) => {
       ],
     });
   }
+  console.log(user);
 
   if (!user) {
     throw new ApiError(401, "Invalid credentials");
@@ -185,6 +186,7 @@ export const me = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "User data fetched successfully", user));
 });
 
+//get all interviewers
 export const getAllInterviewers = asyncHandler(async (_, res) => {
   
   const interviewers = await UserModel.aggregate([

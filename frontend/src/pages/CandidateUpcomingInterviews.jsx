@@ -18,9 +18,32 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useGetCandidateInterviews } from '../hooks/queries/useGetCandidateInterviews';
+import { useMutation } from "@tanstack/react-query";
+import { getInterviewToken } from '@/api/interview/getInterviewToken';
+import { setInterviewSessionData } from '@/redux/interviewSessionDataSlice';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 
 const CandidateUpcomingInterviews = () => {
   const [statusFilter, setStatusFilter] = useState('all');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const interviewTokenMutation = useMutation({
+    mutationFn: getInterviewToken,
+    onSuccess: (data) => {
+      console.log("Interview token data : ", data);
+      //put this data in session storage
+      sessionStorage.setItem('sessionData', JSON.stringify(data.data));
+      //dispatch to redux store as well
+      dispatch(setInterviewSessionData({ sessionData: data.data }));
+      navigate('/interview/room');
+    },
+    onError: (error) => {
+      console.log("Error while getting interview token : ", error);
+      toast.error(error.message || "Getting interview token : Something went wrong");
+    },
+  });
 
   // Using TanStack Query to fetch candidate interviews
   const { 
@@ -83,8 +106,9 @@ const CandidateUpcomingInterviews = () => {
     try {
       const interviewTime = parseISO(scheduledAt);
       const now = new Date();
-      const endTime = addHours(interviewTime, 2); // Assuming 2-hour interview duration
-      
+      // I want 2 week duration
+      const endTime = addHours(interviewTime, 3360); // Assuming 3360-minute interview duration
+
       return isAfter(now, interviewTime) && isBefore(now, endTime);
     } catch {
       return false;
@@ -92,7 +116,7 @@ const CandidateUpcomingInterviews = () => {
   };
 
   const canJoinInterview = (status, scheduledAt) => {
-    return status?.toLowerCase() === 'scheduled' && (isInterviewLive(scheduledAt) || isAfter(new Date(), parseISO(scheduledAt)));
+    return status?.toLowerCase() === 'scheduled' && isInterviewLive(scheduledAt);
   };
 
   const getStats = () => {
@@ -307,12 +331,11 @@ const CandidateUpcomingInterviews = () => {
                             ? 'bg-[#6A38C2] hover:bg-[#5b30a6] text-white'
                             : 'bg-gray-100 text-gray-500 cursor-not-allowed'
                         }`}
-                        disabled={interview.status !== 'scheduled'}
+                        disabled={ !canJoinInterview(interview.status, interview.scheduledAt) }
                         onClick={() => {
                           if (interview.status === 'scheduled') {
-                            // Future: Handle join interview
-                            console.log('Joining interview:', interview._id);
-                          }
+                            interviewTokenMutation.mutate({ interviewId: interview._id });
+                          }     
                         }}
                       >
                         <Video className="h-4 w-4 mr-2" />

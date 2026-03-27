@@ -41,13 +41,15 @@ const DashboardJobs = () => {
   };
 
   // API call
-  const { data: jobsData, isLoading, isError, refetch } = useGetAdminJobs({
+  const { data: jobsData, isLoading, isError , error, refetch } = useGetAdminJobs({
     page,
     limit: limit.current,
     search,
     department,
     state: state.find((s) => s.isActive)?.type.toLowerCase() || "all",
   });
+
+  
 
   const jobs = jobsData?.data?.jobs || [];
   const totalJobs = jobsData?.data?.totalJobs || 0;
@@ -123,7 +125,7 @@ const DashboardJobs = () => {
                 </>
 
               )}
-              {isError && <p className="text-red-500">Error fetching jobs</p>}
+              {isError && error.status !== 404 && <p className="text-red-500">Error fetching jobs</p>}
               {!isLoading && jobs.length === 0 && <p className="">No jobs found</p>}
 
               <div className="mt-2 space-y-2">

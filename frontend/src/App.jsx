@@ -30,6 +30,8 @@ import DashboardInterviews from "./components/admin/DashboardInterviews";
 import DashboardFeedback from "./components/admin/DashboardFeedback";
 import CandidateUpcomingInterviews from "./pages/CandidateUpcomingInterviews";
 import RecruiterUpcomingInterviews from "./pages/RecruiterUpcomingInterviews";
+import InterviewProtectedRoute from "./layout/InterviewProtectedRoute";
+import InterviewRoom from "./pages/InterviewRoom";
 
 const appRouter = createBrowserRouter([
   {
@@ -60,6 +62,8 @@ const appRouter = createBrowserRouter([
         path : "/jobs/:id",
         element : <JobDescription />
       },
+
+      
       
       {
         path: "browse",
@@ -141,6 +145,15 @@ const appRouter = createBrowserRouter([
       },
     ],
   },
+
+  {
+        path: "interview/room",
+        element: (
+          <InterviewProtectedRoute>
+            <InterviewRoom />
+          </InterviewProtectedRoute>
+        ),
+      },
 
   // ADMIN ROUTES
   {

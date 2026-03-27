@@ -18,27 +18,17 @@ const isAuthenticated = async (req, res, next) => {
     const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
 
     req.id = decoded.userId;
-    
+
 
     next();
   } catch (error) {
-    console.log(error.name);
-    if (
-      error.name === "TokenExpiredError" ||
-      error.name === "JsonWebTokenError" ||
-      error.name === "NotBeforeError"
-    ) {
-      const refreshToken = req.cookies?.jobify_refresh_token;
 
-      await checkForRefreshToken(refreshToken, req, res, next);
-      return;
-    } else {
-      throw new ApiError(
-        401,
-        error?.message || "Unauthorized request : Invalid access token"
-      );
-    }
+    throw new ApiError(
+      401,
+      error?.message || "Unauthorized request : Invalid access token"
+    );
   }
+
 };
 
 export default isAuthenticated;
