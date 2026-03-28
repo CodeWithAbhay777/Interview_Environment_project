@@ -40,13 +40,15 @@ export default function registerSocketHandlers(io) {
         });
 
 
-        //CODE TRANSMISSION: When candidate writes code, send it to interviewer
-        socket.on('code-transmission', (data) => {
-            const { language ,code, callId } = data;
-            io.to(callId).emit('code-transmission', {
+        //CODE CHANGE: When candidate writes code, send it to interviewer
+        socket.on('code-change', (data) => {
+            const {user ,language ,code, callId } = data;
+            // Broadcast to everyone else in the room, not back to sender.
+            socket.to(callId).emit('code-transmission', {
                 language: language,
                 code: code,
-                timestamp: new Date().toLocaleTimeString()
+                user: user,
+                
             });
         });
 

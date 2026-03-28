@@ -15,6 +15,7 @@ import Chat from './Chat';
 import InterviewQuestions from './InterviewQuestions';
 import RecordAnswerArea from './RecordAnswerArea';
 import Whiteboard from './Whiteboard';
+import CodeEditorPanel from './CodeEditorPanel';
 
 const CallView = ({ onLeave }) => {
   const { interviewSessionData } = useSelector((state) => state.interviewSession);
@@ -27,6 +28,7 @@ const CallView = ({ onLeave }) => {
   const [interviewQuestionsVisibility, setInterviewQuestionsVisibility] = useState(false);
   const [answerAreaVisibility, setAnswerAreaVisibility] = useState(false);
   const [whiteboardVisibility, setWhiteboardVisibility] = useState(false);
+  const [codeEditorVisibility, setCodeEditorVisibility] = useState(false);
   const [askedQuestionData, setAskedQuestionData] = useState(null);
   const { socket, isConnected, joinRoom, leaveRoom, addEventListener } = useSocket();
   const canViewQuestions = interviewSessionData?.role === 'recruiter' || interviewSessionData?.role === 'admin';
@@ -39,6 +41,7 @@ const CallView = ({ onLeave }) => {
         setInterviewQuestionsVisibility(false);
         setAnswerAreaVisibility(false);
         setWhiteboardVisibility(false);
+        setCodeEditorVisibility(false);
       }
       return next;
     });
@@ -51,6 +54,7 @@ const CallView = ({ onLeave }) => {
         setChatVisibility(false);
         setAnswerAreaVisibility(false);
         setWhiteboardVisibility(false);
+        setCodeEditorVisibility(false);
       }
       return next;
     });
@@ -63,6 +67,7 @@ const CallView = ({ onLeave }) => {
         setChatVisibility(false);
         setInterviewQuestionsVisibility(false);
         setWhiteboardVisibility(false);
+        setCodeEditorVisibility(false);
       }
       return next;
     });
@@ -75,6 +80,20 @@ const CallView = ({ onLeave }) => {
         setChatVisibility(false);
         setInterviewQuestionsVisibility(false);
         setAnswerAreaVisibility(false);
+        setCodeEditorVisibility(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleCodeEditorVisibility = () => {
+    setCodeEditorVisibility((prev) => {
+      const next = !prev;
+      if (next) {
+        setChatVisibility(false);
+        setInterviewQuestionsVisibility(false);
+        setAnswerAreaVisibility(false);
+        setWhiteboardVisibility(false);
       }
       return next;
     });
@@ -226,6 +245,8 @@ const CallView = ({ onLeave }) => {
           onToggleAnswerArea={toggleAnswerAreaVisibility}
           whiteboardVisibility={whiteboardVisibility}
           onToggleWhiteboard={toggleWhiteboardVisibility}
+          codeEditorVisibility={codeEditorVisibility}
+          onToggleCodeEditor={toggleCodeEditorVisibility}
         />
 
       </div>
@@ -245,6 +266,13 @@ const CallView = ({ onLeave }) => {
         <Whiteboard
           whiteboardVisibility={whiteboardVisibility}
           setWhiteboardVisibility={setWhiteboardVisibility}
+        />
+      )}
+
+      {codeEditorVisibility && (
+        <CodeEditorPanel
+          codeEditorVisibility={codeEditorVisibility}
+          setCodeEditorVisibility={setCodeEditorVisibility}
         />
       )}
 

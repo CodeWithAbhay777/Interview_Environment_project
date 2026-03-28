@@ -120,6 +120,23 @@ export const SocketProvider = ({ children, user }) => {
     return true;
   }, [socket, user]);
 
+  const sendCodeChange = useCallback((roomId, language, code) => {
+    if (!socket || !socket.connected) {
+      console.warn('⚠️ Cannot send code change: Socket not connected');
+      return false;
+    }
+
+    socket.emit('code-change', {
+      callId: roomId,
+      user,
+      language,
+      code,
+      
+    });
+
+    return true;
+  }, [socket, user]);
+
 
 
   
@@ -141,8 +158,9 @@ export const SocketProvider = ({ children, user }) => {
     leaveRoom,
     sendMessage,
     sendAskedQuestion,
+    sendCodeChange,
     addEventListener
-  }), [socket, isConnected, user, joinRoom, leaveRoom, sendMessage, sendAskedQuestion, addEventListener]);
+  }), [socket, isConnected, user, joinRoom, leaveRoom, sendMessage, sendAskedQuestion, sendCodeChange, addEventListener]);
 
 
   return (

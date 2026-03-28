@@ -12,6 +12,7 @@ import {
   ListChecks,
   FileAudio,
   PenTool,
+  Code2,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import {
@@ -42,6 +43,8 @@ const CustomControls = ({
   onToggleAnswerArea,
   whiteboardVisibility,
   onToggleWhiteboard,
+  codeEditorVisibility,
+  onToggleCodeEditor,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const { useCameraState, useMicrophoneState } = useCallStateHooks();
@@ -147,6 +150,17 @@ const CustomControls = ({
         title="Toggle Whiteboard"
       >
         <PenTool className="h-5 w-5" />
+      </Button>
+
+      {/* Code Editor Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className={`h-11 w-11 rounded-full bg-gray-700 hover:bg-gray-200 text-white transition-all duration-200 ${codeEditorVisibility ? 'bg-gray-300 text-black' : ''}`}
+        onClick={onToggleCodeEditor}
+        title="Toggle Code Editor"
+      >
+        <Code2 className="h-5 w-5" />
       </Button>
 
       {/* Settings Button */}

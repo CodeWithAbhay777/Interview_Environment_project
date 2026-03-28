@@ -6,6 +6,7 @@ import ApplicationModel from "../models/application.model.js";
 import InterviewModel from "../models/interview.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import InterviewQuestionModel from "../models/interviewQuestions.model.js";
+import runCode from "../utils/runCode.js";
 
 
 
@@ -84,6 +85,24 @@ export const getRoomToken = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Room token generated successfully", userInfoForRoom));
 
 
+});
+
+
+export const runCodeInInterview = asyncHandler(async (req, res) => {
+    const { source_code, language_id } = req.body;
+
+    if (!source_code || !language_id) {
+        throw new ApiError(400, "Source code and language ID are required");
+    }
+
+    
+    const result = await runCode(source_code, language_id);
+
+    if (!result.success) {
+        throw new ApiError(500, result.error || "Code execution failed");
+    }
+
+    res.status(200).json(new ApiResponse(200, "Code executed successfully", result.response));
 });
 
 
