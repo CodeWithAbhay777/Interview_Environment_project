@@ -106,6 +106,14 @@ export const runCodeInInterview = asyncHandler(async (req, res) => {
 });
 
 
-// export const endInterview = asyncHandler(async (req , res) => {
+export const endInterview = asyncHandler(async (req , res) => {
+    const { interviewData } = req;
 
-// });
+    await InterviewModel.findByIdAndUpdate(interviewData._id, { currentlyRunning: false , isInterviewerJoined: false , status : "completed" });
+
+    await ApplicationModel.findOneAndUpdate(
+        { job: interviewData.job, candidateApplied: interviewData.candidateSelected },
+        { status: "interview-completed" }
+    );
+    res.status(200).json(new ApiResponse(200, "Interview ended successfully"));
+});

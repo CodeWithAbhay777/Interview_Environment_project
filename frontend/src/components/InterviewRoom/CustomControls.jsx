@@ -13,6 +13,7 @@ import {
   FileAudio,
   PenTool,
   Code2,
+  FileText,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import {
@@ -45,6 +46,9 @@ const CustomControls = ({
   onToggleWhiteboard,
   codeEditorVisibility,
   onToggleCodeEditor,
+  canViewResume,
+  resumeVisibility,
+  onToggleResume,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const { useCameraState, useMicrophoneState } = useCallStateHooks();
@@ -151,6 +155,19 @@ const CustomControls = ({
       >
         <PenTool className="h-5 w-5" />
       </Button>
+
+      {/* Resume Button */}
+      {canViewResume ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-11 w-11 rounded-full bg-gray-700 hover:bg-gray-200 text-white transition-all duration-200 ${resumeVisibility ? 'bg-gray-300 text-black' : ''}`}
+          onClick={onToggleResume}
+          title="View Candidate Resume"
+        >
+          <FileText className="h-5 w-5" />
+        </Button>
+      ) : null}
 
       {/* Code Editor Button */}
       <Button

@@ -30,7 +30,7 @@ const Login = () => {
 
   //API call
   const loginMutation = useMutation({
-    mutationKey: ["loginData"],
+    // mutationKey: ["loginData"],
     mutationFn: loginUser,
     onSuccess: (data) => {
 
@@ -44,10 +44,11 @@ const Login = () => {
     },
 
     onError: (err) => {
-      // setInput({ emailOrUsername: "", password: "", role: "" });
+      
       console.log(err);
 
       toast.error(err.message || "Login user : Something went wrong");
+      setInput({ emailOrUsername: "", password: "", role: "" });
     },
   });
 

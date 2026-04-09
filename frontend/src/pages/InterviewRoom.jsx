@@ -1,8 +1,10 @@
+import { endInterview } from '@/api/interview/endInterview';
 import CallView from '@/components/InterviewRoom/CallView';
 import Lobby from '@/components/InterviewRoom/Lobby';
 import { SocketProvider } from '@/contexts/SocketContext';
 import { setInterviewSessionData } from '@/redux/interviewSessionDataSlice';
 import { StreamCall, StreamVideo, StreamVideoClient } from '@stream-io/video-react-sdk';
+import axios from 'axios';
 import { set } from 'date-fns/set';
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
@@ -48,7 +50,7 @@ const InterviewRoom = () => {
                     return;
                 }
 
-               
+
 
                 const vc = new StreamVideoClient({
                     apiKey: import.meta.env.VITE_STREAM_VIDEO_API_KEY,
@@ -98,8 +100,48 @@ const InterviewRoom = () => {
     };
 
     const leave = async () => {
-        await call.leave();
-        setInCall(false);
+
+        const confirmLeave = window.confirm("Are you sure you want to end the interview?");
+
+        if (!confirmLeave) {
+            return; // User cancelled the action
+        }
+
+        if (interviewSessionData.role === 'candidate') {
+
+            await call.leave();
+            setInCall(false);
+            navigate('/');
+
+        } else {
+
+            try {
+
+                const response = await endInterview(interviewSessionData.interviewId);
+
+                if (!response.success) {
+                    toast.error('Failed to end interview.');
+                    console.log(response);
+                    return;
+                }
+
+                toast.success('Interview ended successfully.');
+                await call.leave();
+                setInCall(false);
+                navigate(`/interview-scoring/${interviewSessionData.interviewId}`);
+
+
+
+
+            } catch (error) {
+                console.log(error);
+                toast.error('Error leaving the call. Please try again.');
+            }
+
+        }
+
+
+
     };
 
 

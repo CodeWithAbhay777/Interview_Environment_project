@@ -109,16 +109,10 @@ const Navbar = () => {
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                   </Link>
                   <DropdownMenuItem>
-                    <Link to="/notifications">Notifications</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
                     <Link to="/candidate/upcoming-interviews">Upcoming Interviews</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <Link to="/applied-jobs">Applied jobs</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/results">Results</Link>
+                    <Link to="/candidate/results">Results</Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
@@ -132,9 +126,6 @@ const Navbar = () => {
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                   </Link>
 
-                  <DropdownMenuItem>
-                    <Link to="/notifications">Notifications</Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Link to="/recruiter/upcoming-interviews">Upcoming Interviews</Link>
                   </DropdownMenuItem>

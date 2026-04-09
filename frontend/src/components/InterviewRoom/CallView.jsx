@@ -16,6 +16,7 @@ import InterviewQuestions from './InterviewQuestions';
 import RecordAnswerArea from './RecordAnswerArea';
 import Whiteboard from './Whiteboard';
 import CodeEditorPanel from './CodeEditorPanel';
+import ResumeViewer from './ResumeViewer';
 
 const CallView = ({ onLeave }) => {
   const { interviewSessionData } = useSelector((state) => state.interviewSession);
@@ -29,9 +30,11 @@ const CallView = ({ onLeave }) => {
   const [answerAreaVisibility, setAnswerAreaVisibility] = useState(false);
   const [whiteboardVisibility, setWhiteboardVisibility] = useState(false);
   const [codeEditorVisibility, setCodeEditorVisibility] = useState(false);
+  const [resumeVisibility, setResumeVisibility] = useState(false);
   const [askedQuestionData, setAskedQuestionData] = useState(null);
   const { socket, isConnected, joinRoom, leaveRoom, addEventListener } = useSocket();
   const canViewQuestions = interviewSessionData?.role === 'recruiter' || interviewSessionData?.role === 'admin';
+  const canViewResume = canViewQuestions && Boolean(interviewSessionData?.resumeUrl);
   const canAnswerQuestions = interviewSessionData?.role === 'candidate';
 
   const toggleChatVisibility = () => {
@@ -42,6 +45,7 @@ const CallView = ({ onLeave }) => {
         setAnswerAreaVisibility(false);
         setWhiteboardVisibility(false);
         setCodeEditorVisibility(false);
+        setResumeVisibility(false);
       }
       return next;
     });
@@ -55,6 +59,7 @@ const CallView = ({ onLeave }) => {
         setAnswerAreaVisibility(false);
         setWhiteboardVisibility(false);
         setCodeEditorVisibility(false);
+        setResumeVisibility(false);
       }
       return next;
     });
@@ -68,6 +73,7 @@ const CallView = ({ onLeave }) => {
         setInterviewQuestionsVisibility(false);
         setWhiteboardVisibility(false);
         setCodeEditorVisibility(false);
+        setResumeVisibility(false);
       }
       return next;
     });
@@ -81,6 +87,7 @@ const CallView = ({ onLeave }) => {
         setInterviewQuestionsVisibility(false);
         setAnswerAreaVisibility(false);
         setCodeEditorVisibility(false);
+        setResumeVisibility(false);
       }
       return next;
     });
@@ -94,6 +101,21 @@ const CallView = ({ onLeave }) => {
         setInterviewQuestionsVisibility(false);
         setAnswerAreaVisibility(false);
         setWhiteboardVisibility(false);
+        setResumeVisibility(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleResumeVisibility = () => {
+    setResumeVisibility((prev) => {
+      const next = !prev;
+      if (next) {
+        setChatVisibility(false);
+        setInterviewQuestionsVisibility(false);
+        setAnswerAreaVisibility(false);
+        setWhiteboardVisibility(false);
+        setCodeEditorVisibility(false);
       }
       return next;
     });
@@ -247,6 +269,9 @@ const CallView = ({ onLeave }) => {
           onToggleWhiteboard={toggleWhiteboardVisibility}
           codeEditorVisibility={codeEditorVisibility}
           onToggleCodeEditor={toggleCodeEditorVisibility}
+          canViewResume={canViewResume}
+          resumeVisibility={resumeVisibility}
+          onToggleResume={toggleResumeVisibility}
         />
 
       </div>
@@ -275,6 +300,14 @@ const CallView = ({ onLeave }) => {
           setCodeEditorVisibility={setCodeEditorVisibility}
         />
       )}
+
+      {canViewResume ? (
+        <ResumeViewer
+          open={resumeVisibility}
+          onOpenChange={setResumeVisibility}
+          resumeUrl={interviewSessionData?.resumeUrl}
+        />
+      ) : null}
 
       {
         canAnswerQuestions ? (
