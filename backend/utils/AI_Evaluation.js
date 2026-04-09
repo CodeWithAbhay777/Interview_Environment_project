@@ -66,6 +66,8 @@ Scoring rules:
 Also:
 - totalScore = sum of all above (max 40)
 - Give 2-3 improvement points
+- Don't be too harsh on grammer or spelling, focus on technical content.
+- Don't expect too perfect answers, just try to understand wheather the candidate has a good understanding of the concept and can communicate it well.  
 
 Return ONLY JSON.`
         })

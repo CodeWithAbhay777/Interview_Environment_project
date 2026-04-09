@@ -16,7 +16,6 @@ import ProtectedRoute from "./components/admin/ProtectedRoute";
 
 import JobApplicationForm from "./components/JobApplicationForm";
 import Mainlayout from "./layout/Mainlayout";
-import Verification from "./pages/Verification";
 import CandidateProfileForm from "./pages/CandidateProfileForm";
 import RecruiterProfileForm from "./pages/RecruiterProfileForm";
 import AdminDashboardLayout from "./layout/AdminDashboardLayout";
@@ -32,6 +31,12 @@ import CandidateUpcomingInterviews from "./pages/CandidateUpcomingInterviews";
 import RecruiterUpcomingInterviews from "./pages/RecruiterUpcomingInterviews";
 import InterviewProtectedRoute from "./layout/InterviewProtectedRoute";
 import InterviewRoom from "./pages/InterviewRoom";
+import InterviewScoring from "./pages/InterviewScoring";
+import EndInterviewProtectedRoute from "./layout/EndInterviewProtectedRoute";
+import CandidateResults from "./pages/CandidateResults";
+import CandidateReportDetail from "./pages/CandidateReportDetail";
+import About from "./pages/About";
+
 
 const appRouter = createBrowserRouter([
   {
@@ -41,10 +46,6 @@ const appRouter = createBrowserRouter([
       {
         path: "/",
         element: <Home />,
-      },
-      {
-        path: "verification",
-        element: <Verification />,
       },
       {
         path: "login",
@@ -59,12 +60,15 @@ const appRouter = createBrowserRouter([
         element: <Jobs />,
       },
       {
-        path : "/jobs/:id",
-        element : <JobDescription />
+        path: "/jobs/:id",
+        element: <JobDescription />
       },
 
-      
-      
+      {
+        path: "about",
+        element : <About />
+      },
+
       {
         path: "browse",
         element: <Browse />,
@@ -72,6 +76,14 @@ const appRouter = createBrowserRouter([
       {
         path: "candidate/upcoming-interviews",
         element: <CandidateUpcomingInterviews />,
+      },
+      {
+        path: "candidate/results",
+        element: <CandidateResults />,
+      },
+      {
+        path: "candidate/results/:reportId",
+        element: <CandidateReportDetail />,
       },
       {
         path: "recruiter/upcoming-interviews",
@@ -147,13 +159,22 @@ const appRouter = createBrowserRouter([
   },
 
   {
-        path: "interview/room",
-        element: (
-          <InterviewProtectedRoute>
-            <InterviewRoom />
-          </InterviewProtectedRoute>
-        ),
-      },
+    path: "interview/room",
+    element: (
+      <InterviewProtectedRoute>
+        <InterviewRoom />
+      </InterviewProtectedRoute>
+    ),
+  },
+
+  {
+    path: "interview-scoring/:interviewId",
+    element: (
+      <EndInterviewProtectedRoute>
+        <InterviewScoring />
+      </EndInterviewProtectedRoute>
+    )
+  },
 
   // ADMIN ROUTES
   {
@@ -169,7 +190,7 @@ const appRouter = createBrowserRouter([
         element: <DashboardJobs />,
       },
       {
-        path : "jobs/create",
+        path: "jobs/create",
         element: <CreateJobsForm />
       },
       {
@@ -179,11 +200,11 @@ const appRouter = createBrowserRouter([
       {
         path: "jobs/:id/interviews",
         element: <ManageInterviewsOfJob />
-      }, 
+      },
       // interviews
       {
-        path : "interviews",
-        element : <DashboardInterviews />
+        path: "interviews",
+        element: <DashboardInterviews />
 
       }
       // feedback

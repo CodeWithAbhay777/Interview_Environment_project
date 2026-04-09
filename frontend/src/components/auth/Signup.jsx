@@ -35,8 +35,8 @@ const Signup = () => {
             }
         },
         onError: (error) => {
-            console.log("Error while registration : ",error);
-            toast.error(error.message || "Something went wrong");
+            console.log("Error while registrationnn : ",error);
+            toast.error(error || "Something went wrong");
             registerMutation.loading = false;
         }
     })

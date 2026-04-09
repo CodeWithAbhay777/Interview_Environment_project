@@ -26,8 +26,6 @@ const Lobby = ({onJoin}) => {
     const { microphone, isMuted: isMicMuted, status: micStatus } = useMicrophoneState();
     const [isReady, setIsReady] = useState(false);
 
-    console.log('Camera Muted:', isCameraMuted, 'Camera Status:', cameraStatus);
-    console.log('Mic Muted:', isMicMuted, 'Mic Status:', micStatus);
 
     useEffect(() => {
         camera.enable();

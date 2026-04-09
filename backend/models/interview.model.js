@@ -42,6 +42,11 @@ const interviewSchema = mongoose.Schema({
     default : 'scheduled',
    },
 
+   isScoreGiven : {
+    type : Boolean,
+    default : false,
+   },
+
    currentlyRunning : {
     type : Boolean,
     default : false,
