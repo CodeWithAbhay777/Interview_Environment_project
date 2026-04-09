@@ -6,7 +6,8 @@ import {
   getInterviewById, 
   getAllInterviews,
   getAllCandidateInterviews,
-  getAllRecruiterInterviews
+  getAllRecruiterInterviews,
+  shortlistCandidateForInterview
 } from '../controllers/interview.controller.js';
 import isAuthenticated from '../middlewares/isAuthenticated.middleware.js';
 import { isAdmin } from '../middlewares/isAdmin.middleware.js';
@@ -28,5 +29,7 @@ router.get('/recruiter' , isAuthenticated, getAllRecruiterInterviews);
 router.get('/:id', isAuthenticated, getInterviewById);
 router.put('/:id/status', isAuthenticated, isAdmin, updateInterviewStatus);
 
+//Shortlist Candidates for interview
+router.put('/:id/shortlist' , isAuthenticated , isAdmin , shortlistCandidateForInterview);
 
 export default router;

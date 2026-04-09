@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetInterviewsByJob } from '@/hooks/queries/useGetInterviewsByJob';
 import { useGetIndividualJobForAdmin } from '@/hooks/queries/useGetIndividualJobForAdmin';
 import { format } from 'date-fns';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { updateInterviewCandidateSelection } from '@/api/interviews/updateInterviewCandidateSelection';
 
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { 
   Select, 
   SelectContent, 
@@ -83,9 +87,14 @@ const ManageInterviewsOfJob = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState(null);
+  const [selectionByInterviewId, setSelectionByInterviewId] = useState({});
+  const [updatingSelectionByInterviewId, setUpdatingSelectionByInterviewId] = useState({});
+  const [selectionConfirmOpen, setSelectionConfirmOpen] = useState(false);
+  const [pendingSelectionAction, setPendingSelectionAction] = useState(null);
   
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // API Calls
   const { data: jobData, isLoading: jobLoading } = useGetIndividualJobForAdmin(id);
@@ -107,6 +116,49 @@ const ManageInterviewsOfJob = () => {
   const interviews = interviewsData?.data?.interviews || [];
   const totalInterviews = interviewsData?.data?.totalInterviews || 0;
   const totalPages = interviewsData?.data?.totalPages || 1;
+
+  useEffect(() => {
+    const mappedSelections = interviews.reduce((acc, interview) => {
+      acc[interview._id] = interview?.isCandidateSelected === 'selected';
+      return acc;
+    }, {});
+
+    setSelectionByInterviewId(mappedSelections);
+  }, [interviews]);
+
+  const selectionMutation = useMutation({
+    mutationFn: ({ interviewId, isSelected }) =>
+      updateInterviewCandidateSelection(interviewId, isSelected),
+    onSuccess: (_data, variables) => {
+      setUpdatingSelectionByInterviewId((prev) => ({
+        ...prev,
+        [variables.interviewId]: false
+      }));
+
+      toast.success(
+        variables.isSelected
+          ? 'Candidate shortlisted successfully. Selection email will be sent.'
+          : 'Candidate selection reset to pending.'
+      );
+
+      queryClient.invalidateQueries({ queryKey: ['jobInterviews'] });
+    },
+    onError: (error, variables) => {
+      setUpdatingSelectionByInterviewId((prev) => ({
+        ...prev,
+        [variables.interviewId]: false
+      }));
+
+      // Revert optimistic switch state when API call fails
+      setSelectionByInterviewId((prev) => ({
+        ...prev,
+        [variables.interviewId]: variables.previousSelected
+      }));
+
+      toast.error(error?.response?.data?.message || error?.message || 'Failed to update candidate selection status');
+      refetch();
+    }
+  });
 
   const getStatusBadgeVariant = (status) => {
     switch (status) {
@@ -168,6 +220,69 @@ const ManageInterviewsOfJob = () => {
       default: return <AlertTriangle className="h-4 w-4 text-gray-600" />;
     }
   };
+
+  const getInterviewScoreInfo = (interview) => {
+    const finalScore = interview?.result?.finalResult ?? interview?.finalReport?.finalScore;
+    const interviewerScore = interview?.interviewerEvaluation?.percentage ?? interview?.finalReport?.interviewerScorePercentage;
+    const aiScore = interview?.finalReport?.aiScorePercentage;
+
+    return {
+      finalScore,
+      interviewerScore,
+      aiScore
+    };
+  };
+
+  const formatScoreValue = (score) => {
+    if (typeof score !== 'number' || Number.isNaN(score)) {
+      return 'N/A';
+    }
+
+    return `${Math.round(score)}%`;
+  };
+
+  const triggerSelectionUpdate = useCallback((interviewId, isSelected) => {
+    const previousSelected = selectionByInterviewId[interviewId] ?? false;
+
+    setSelectionByInterviewId((prev) => ({
+      ...prev,
+      [interviewId]: isSelected
+    }));
+
+    setUpdatingSelectionByInterviewId((prev) => ({
+      ...prev,
+      [interviewId]: true
+    }));
+
+    selectionMutation.mutate({ interviewId, isSelected, previousSelected });
+  }, [selectionByInterviewId, selectionMutation]);
+
+  const closeSelectionConfirmDialog = useCallback(() => {
+    setSelectionConfirmOpen(false);
+    setPendingSelectionAction(null);
+  }, []);
+
+  const handleSelectionToggle = useCallback((interview, isSelected) => {
+    if (isSelected) {
+      setPendingSelectionAction({
+        interviewId: interview._id,
+        candidateName: interview?.candidate?.username || 'this candidate'
+      });
+      setSelectionConfirmOpen(true);
+      return;
+    }
+
+    triggerSelectionUpdate(interview._id, false);
+  }, [triggerSelectionUpdate]);
+
+  const confirmSelectionAndShortlist = useCallback(() => {
+    if (!pendingSelectionAction?.interviewId) {
+      return;
+    }
+
+    triggerSelectionUpdate(pendingSelectionAction.interviewId, true);
+    closeSelectionConfirmDialog();
+  }, [pendingSelectionAction, triggerSelectionUpdate, closeSelectionConfirmDialog]);
 
   const filteredInterviews = interviews.filter(interview => {
     if (!searchTerm) return true;
@@ -509,21 +624,29 @@ const ManageInterviewsOfJob = () => {
             ) : (
               <>
               {/* Desktop Table View */}
-              <div className="hidden lg:block overflow-x-auto">
-                <Table>
+              <div className="hidden xl:block overflow-x-auto rounded-md border border-gray-100">
+                <Table className="min-w-[1120px]">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[200px]">Candidate</TableHead>
+                      <TableHead className="w-[150px]">Candidate</TableHead>
                       <TableHead className="w-[150px]">Interviewer</TableHead>
                       <TableHead className="w-[120px]">Type</TableHead>
                       <TableHead className="w-[150px]">Scheduled Date</TableHead>
                       <TableHead className="w-[100px]">Time</TableHead>
                       <TableHead className="w-[120px]">Status</TableHead>
-                      <TableHead className="w-[100px]">Actions</TableHead>
+                      <TableHead className="w-[170px]">Scores</TableHead>
+                      <TableHead className="w-[160px] sticky right-[88px] z-20 bg-white shadow-[-1px_0_0_0_rgba(229,231,235,1)]">Selected</TableHead>
+                      <TableHead className="w-[88px] sticky right-0 z-20 bg-white">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredInterviews.map((interview) => (
+                    {filteredInterviews.map((interview) => {
+                      const scoreInfo = getInterviewScoreInfo(interview);
+                      const isCompletedInterview = interview.status === 'completed';
+                      const isSelected = selectionByInterviewId[interview._id] ?? (interview?.isCandidateSelected === 'selected');
+                      const isUpdatingSelection = updatingSelectionByInterviewId[interview._id];
+
+                      return (
                       <TableRow key={interview._id} className="hover:bg-gray-50">
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -539,9 +662,6 @@ const ManageInterviewsOfJob = () => {
                             <div>
                               <p className="font-medium text-sm text-gray-900">
                                 {interview.candidate?.username || 'Unknown'}
-                              </p>
-                              <p className="text-xs text-gray-500 truncate max-w-[150px]">
-                                {interview.candidate?.email || 'No email'}
                               </p>
                             </div>
                           </div>
@@ -601,8 +721,45 @@ const ManageInterviewsOfJob = () => {
                             {interview.status}
                           </Badge>
                         </TableCell>
-                        
+
                         <TableCell>
+                          {isCompletedInterview ? (
+                            <div className="space-y-1 min-w-[150px]">
+                              <p className="text-xs text-gray-600">
+                                Final: <span className="font-semibold text-gray-900">{formatScoreValue(scoreInfo.finalScore)}</span>
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                Interviewer: <span className="font-medium text-gray-900">{formatScoreValue(scoreInfo.interviewerScore)}</span>
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                AI: <span className="font-medium text-gray-900">{formatScoreValue(scoreInfo.aiScore)}</span>
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500">Available after completion</span>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="sticky right-[88px] z-10 bg-white shadow-[-1px_0_0_0_rgba(229,231,235,1)]">
+                          <div className="flex items-center gap-3">
+                            <Switch
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectionToggle(interview, checked)}
+                              disabled={!isCompletedInterview || isUpdatingSelection}
+                              aria-label="Toggle candidate selection"
+                            />
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-gray-700">
+                                {isSelected ? 'Selected' : 'Pending'}
+                              </span>
+                              {isUpdatingSelection ? (
+                                <span className="text-[11px] text-gray-500">Saving...</span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </TableCell>
+                        
+                        <TableCell className="sticky right-0 z-10 bg-white">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -613,14 +770,20 @@ const ManageInterviewsOfJob = () => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )})}
                   </TableBody>
                 </Table>
               </div>
               
               {/* Mobile Card View */}
-              <div className="lg:hidden space-y-4">
-                {filteredInterviews.map((interview) => (
+              <div className="xl:hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredInterviews.map((interview) => {
+                  const scoreInfo = getInterviewScoreInfo(interview);
+                  const isCompletedInterview = interview.status === 'completed';
+                  const isSelected = selectionByInterviewId[interview._id] ?? (interview?.isCandidateSelected === 'selected');
+                  const isUpdatingSelection = updatingSelectionByInterviewId[interview._id];
+
+                  return (
                   <Card key={interview._id} className="border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -688,6 +851,43 @@ const ManageInterviewsOfJob = () => {
                             {interview.candidate?.email || 'No email'}
                           </span>
                         </div>
+
+                        <div className="pt-2">
+                          <Label className="text-xs font-semibold text-gray-600">Scores</Label>
+                          {isCompletedInterview ? (
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                              <div className="rounded-md bg-gray-50 px-2 py-1 text-center">
+                                <p className="text-[10px] text-gray-500">Final</p>
+                                <p className="text-xs font-semibold text-gray-900">{formatScoreValue(scoreInfo.finalScore)}</p>
+                              </div>
+                              <div className="rounded-md bg-gray-50 px-2 py-1 text-center">
+                                <p className="text-[10px] text-gray-500">Interviewer</p>
+                                <p className="text-xs font-semibold text-gray-900">{formatScoreValue(scoreInfo.interviewerScore)}</p>
+                              </div>
+                              <div className="rounded-md bg-gray-50 px-2 py-1 text-center">
+                                <p className="text-[10px] text-gray-500">AI</p>
+                                <p className="text-xs font-semibold text-gray-900">{formatScoreValue(scoreInfo.aiScore)}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500 mt-1">Available after completion</p>
+                          )}
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                          <div>
+                            <p className="text-xs font-semibold text-gray-700">Candidate Selected</p>
+                            <p className="text-[11px] text-gray-500">
+                              {isUpdatingSelection ? 'Saving changes...' : isSelected ? 'Marked as selected' : 'Pending decision'}
+                            </p>
+                          </div>
+                          <Switch
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSelectionToggle(interview, checked)}
+                            disabled={!isCompletedInterview || isUpdatingSelection}
+                            aria-label="Toggle candidate selection"
+                          />
+                        </div>
                       </div>
                       
                       <div className="flex justify-end mt-4">
@@ -703,7 +903,7 @@ const ManageInterviewsOfJob = () => {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                )})}
               </div>
               </>
             )}
@@ -998,6 +1198,41 @@ const ManageInterviewsOfJob = () => {
                 <p className="text-gray-500">No interview data available</p>
               </div>
             )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={selectionConfirmOpen}
+          onOpenChange={(open) => {
+            setSelectionConfirmOpen(open);
+            if (!open) {
+              setPendingSelectionAction(null);
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Shortlist Candidate?</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to select/shortlist {pendingSelectionAction?.candidateName || 'this candidate'}?
+                Once confirmed, we will send an email to the candidate saying they are selected.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={closeSelectionConfirmDialog}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmSelectionAndShortlist}
+                disabled={selectionMutation.isPending}
+              >
+                {selectionMutation.isPending ? 'Confirming...' : 'Yes, Shortlist'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

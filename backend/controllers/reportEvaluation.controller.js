@@ -66,6 +66,9 @@ export const evaluateInterviewerEvaluation = asyncHandler(async (req, res) => {
         interviewId
     });
 
+    //update interview model by isScoreGiven true
+    await InterviewModel.findByIdAndUpdate(interviewId, { isScoreGiven: true });
+
     res.status(201).json(new ApiResponse(201, "Interviewer evaluation saved successfully"));
 });
 
