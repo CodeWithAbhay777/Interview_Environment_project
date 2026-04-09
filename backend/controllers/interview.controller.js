@@ -9,7 +9,10 @@ import mongoose from "mongoose";
 import moment from "moment";
 import { sendInterviewInfoToInterviewer } from "../templates/interviewInfoToInterviewer.js";
 import { sendInterviewInfoEmailToCandidate } from "../templates/interviewInfoToCandidate.js";
+import { sendCandidateShortlistedEmail } from "../templates/candidateShortlisted.js";
 import { emailQueue, emailQueueName } from "../Jobs/sendEmailJob.js";
+import FinalReportModel from "../models/finalReport.model.js";
+import InterviewerEvaluation from "../models/InterviewerEvaluation.model.js";
 
 export const scheduleInterview = asyncHandler(async (req, res) => {
   const {
@@ -150,7 +153,15 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
 
   page = parseInt(page) < 1 ? 1 : parseInt(page);
   limit = parseInt(limit) < 1 ? 10 : parseInt(limit);
-  jobId = new mongoose.Types.ObjectId(jobId);
+  if (!jobId) {
+    throw new ApiError(400, "jobId is required");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new ApiError(400, "Invalid jobId");
+  }
+
+  const jobObjectId = new mongoose.Types.ObjectId(jobId);
   const skip = (page - 1) * limit;
 
  
@@ -161,9 +172,7 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
   if (interviewType && interviewType !== 'all') {
     matchCriteria.interviewType = interviewType;
   }
-  if (jobId) {
-    matchCriteria.job = jobId;
-  }
+  matchCriteria.job = jobObjectId;
 
   
 
@@ -171,7 +180,7 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
     { $match: matchCriteria },
     {
       $lookup: {
-        from: 'usermodels',
+        from: UserModel.collection.name,
         localField: 'candidateSelected',
         foreignField: '_id',
         as: 'candidate'
@@ -179,7 +188,7 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        from: 'usermodels',
+        from: UserModel.collection.name,
         localField: 'interviewerAssigned',
         foreignField: '_id',
         as: 'interviewer'
@@ -187,10 +196,26 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
     },
     {
       $lookup: {
-        from: 'jobmodels',
+        from: JobModel.collection.name,
         localField: 'job',
         foreignField: '_id',
         as: 'jobDetails'
+      }
+    },
+    {
+      $lookup: {
+        from: FinalReportModel.collection.name,
+        localField: '_id',
+        foreignField: 'interviewId',
+        as: 'finalReport'
+      }
+    },
+    {
+      $lookup: {
+        from: InterviewerEvaluation.collection.name,
+        localField: '_id',
+        foreignField: 'interviewId',
+        as: 'interviewerEvaluation'
       }
     },
     {
@@ -217,11 +242,24 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
       }
     },
     {
+      $unwind: {
+        path: '$finalReport',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $unwind: {
+        path: '$interviewerEvaluation',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
       $project: {
         _id: 1,
         interviewType: 1,
         scheduledAt: 1,
         status: 1,
+        isCandidateSelected: 1,
         currentlyRunning: 1,
         createdAt: 1,
         notes: 1,
@@ -236,15 +274,29 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
         'interviewer.role': 1,
         'interviewer.profilePhoto': 1,
         'jobDetails.title': 1,
-        'jobDetails.department': 1
+        'jobDetails.department': 1,
+        finalReport: {
+          _id: '$finalReport._id',
+          aiScorePercentage: '$finalReport.aiScorePercentage',
+          interviewerScorePercentage: '$finalReport.interviewerScorePercentage',
+          finalScore: '$finalReport.finalScore',
+          createdAt: '$finalReport.createdAt'
+        },
+        interviewerEvaluation: {
+          _id: '$interviewerEvaluation._id',
+          totalScore: '$interviewerEvaluation.totalScore',
+          percentage: '$interviewerEvaluation.percentage',
+          recommendationNote: '$interviewerEvaluation.recommendationNote'
+        },
+        result: {
+          finalResult: '$finalReport.finalScore'
+        }
       }
     },
     { $sort: { scheduledAt: -1 } },
     { $skip: skip },
     { $limit: parseInt(limit) }
   ]);
-
-  console.log(interviews)
 
   const totalInterviews = await InterviewModel.countDocuments(matchCriteria);
   const totalPages = Math.ceil(totalInterviews / parseInt(limit));
@@ -261,6 +313,7 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
 });
 
 export const updateInterviewStatus = asyncHandler(async (req, res) => {
+  
   const { id } = req.params;
   const { status, currentlyRunning } = req.body;
 
@@ -386,4 +439,57 @@ export const getAllRecruiterInterviews = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, "Interviews fetched successfully", interviews));
 
 
+});
+
+//Shortlist Candidates for interview
+export const shortlistCandidateForInterview = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { isCandidateSelected } = req.body;
+
+
+  if (typeof isCandidateSelected !== 'string' || !['selected', 'pending'].includes(isCandidateSelected)) {
+    throw new ApiError(400, "isCandidateSelected must be a string with value 'selected' or 'pending'");
+  }
+
+  if (!id) {
+    throw new ApiError(400, "Interview ID is required");
+  }
+
+  const interview = await InterviewModel.findById(id);
+  
+  if (!interview) {
+    throw new ApiError(404, "Interview not found");
+  }
+
+  if (!interview.isScoreGiven){
+    throw new ApiError(400, "Cannot shortlist candidate before giving score");
+  } 
+
+  if (interview.status !== 'completed') {
+    throw new ApiError(400, "Cannot shortlist candidate before interview is completed");
+  }
+
+  interview.isCandidateSelected = isCandidateSelected;
+  await interview.save();
+
+  if (isCandidateSelected === "selected") {
+    console.log('IMMMMM INSIDEEE MAILLLLL')
+    const [candidateInfo, jobInfo] = await Promise.all([
+      UserModel.findById(interview.candidateSelected).select("username email"),
+      JobModel.findById(interview.job).select("title department")
+    ]);
+
+    if (candidateInfo?.email && jobInfo) {
+      const shortlistedEmailPayload = sendCandidateShortlistedEmail(
+        candidateInfo.email,
+        candidateInfo.username,
+        jobInfo.title,
+        jobInfo.department
+      );
+
+      await emailQueue.add(emailQueueName, shortlistedEmailPayload);
+    }
+  }
+
+  return res.status(200).json(new ApiResponse(200, "Candidate shortlisted successfully"));
 });

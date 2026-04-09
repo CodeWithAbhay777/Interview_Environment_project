@@ -42,6 +42,12 @@ const interviewSchema = mongoose.Schema({
     default : 'scheduled',
    },
 
+   isCandidateSelected : {
+      type : String,
+      enum : ['pending', 'selected'],
+      default : 'pending',
+   },
+
    isScoreGiven : {
     type : Boolean,
     default : false,
