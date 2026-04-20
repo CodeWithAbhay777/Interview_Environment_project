@@ -5,7 +5,16 @@ import { useGetJobInfoByAdmin } from '@/hooks/queries/useGetJobInfoByAdmin';
 import { useGetAllInterviewers } from '@/hooks/queries/useGetAllInterviewers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { scheduleInterview } from '@/api/interviews/scheduleInterview';
+import { editJob } from '@/api/jobs/editJobs';
+import { deleteJob } from '@/api/jobs/deleteJob';
 import { toast } from 'sonner';
+import {
+  JOB_DEPARTMENTS,
+  JOB_EXPERIENCE_LEVELS,
+  JOB_SALARY_CURRENCIES,
+  JOB_SALARY_PERIODS,
+  JOB_TYPES,
+} from '@/utils/constant';
 
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +60,7 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
 
 // Icons
 import { 
@@ -92,6 +102,7 @@ const ManageJob = () => {
   const [coverLetterDialogOpen, setCoverLetterDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   // Selected items
   const [selectedApplication, setSelectedApplication] = useState(null);
@@ -103,6 +114,21 @@ const ManageJob = () => {
   const [selectedInterviewer, setSelectedInterviewer] = useState('');
   const [interviewType, setInterviewType] = useState('');
   const [interviewNotes, setInterviewNotes] = useState('');
+  const [editSkillInput, setEditSkillInput] = useState('');
+  const [editJobData, setEditJobData] = useState({
+    title: '',
+    type: 'job',
+    department: 'software engineer',
+    experienceLevel: 'fresher',
+    salaryOffered: '',
+    salaryCurrency: 'INR',
+    salaryPeriod: 'yearly',
+    description: '',
+    skillsRequired: [],
+    openings: 1,
+    applicationDeadline: '',
+    isOpen: true,
+  });
 
   const queryClient = useQueryClient();
 
@@ -135,6 +161,139 @@ const ManageJob = () => {
       toast.error(error.message || 'Failed to schedule interview');
     }
   });
+
+  const editJobMutation = useMutation({
+    mutationKey: ['editJob'],
+    mutationFn: ({ jobID, jobData }) => editJob(jobID, jobData),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['adminJobDetails', id] });
+      queryClient.invalidateQueries({ queryKey: ['adminJobs'] });
+      queryClient.invalidateQueries({ queryKey: ['Jobs'] });
+      toast.success(data?.message || 'Job updated successfully');
+      setEditDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to update job details');
+    },
+  });
+
+  const deleteJobMutation = useMutation({
+    mutationKey: ['deleteJob'],
+    mutationFn: (jobID) => deleteJob(jobID),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['adminJobs'] });
+      queryClient.invalidateQueries({ queryKey: ['adminJobDetails', id] });
+      queryClient.invalidateQueries({ queryKey: ['adminJobInfo'] });
+      queryClient.invalidateQueries({ queryKey: ['Jobs'] });
+      toast.success(data?.message || 'Job deleted successfully');
+      navigate('/admin/dashboard/jobs');
+    },
+    onError: (error) => {
+      toast.error(error?.message || 'Failed to delete job');
+    },
+  });
+
+  const handleDeleteJob = () => {
+    const isConfirmed = window.confirm(
+      'Delete this job? This will permanently delete linked applications, interviews, and interview reports.'
+    );
+
+    if (!isConfirmed) return;
+
+    deleteJobMutation.mutate(id);
+  };
+
+  const formatDateForInput = (dateValue) => {
+    if (!dateValue) return '';
+
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+  const openEditDialog = () => {
+    if (!job) return;
+
+    setEditJobData({
+      title: job.title || '',
+      type: job.type || 'job',
+      department: job.department || 'software engineer',
+      experienceLevel: job.experienceLevel || 'fresher',
+      salaryOffered: job.salaryOffered ?? '',
+      salaryCurrency: job.salaryCurrency || 'INR',
+      salaryPeriod: job.salaryPeriod || 'yearly',
+      description: job.description || '',
+      skillsRequired: Array.isArray(job.skillsRequired) ? job.skillsRequired : [],
+      openings: job.openings ?? 1,
+      applicationDeadline: formatDateForInput(job.applicationDeadline),
+      isOpen: job.isOpen ?? true,
+    });
+    setEditSkillInput('');
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSkillInput = (e) => {
+    if (e.key !== 'Enter' || !editSkillInput.trim()) return;
+
+    e.preventDefault();
+    const normalizedSkill = editSkillInput.trim();
+
+    if (!editJobData.skillsRequired.includes(normalizedSkill)) {
+      setEditJobData((prev) => ({
+        ...prev,
+        skillsRequired: [...prev.skillsRequired, normalizedSkill],
+      }));
+    }
+
+    setEditSkillInput('');
+  };
+
+  const removeEditSkill = (skillToRemove) => {
+    setEditJobData((prev) => ({
+      ...prev,
+      skillsRequired: prev.skillsRequired.filter((skill) => skill !== skillToRemove),
+    }));
+  };
+
+  const handleEditJobSubmit = () => {
+    const trimmedTitle = editJobData.title.trim();
+    const trimmedDescription = editJobData.description.trim();
+
+    if (!trimmedTitle || !trimmedDescription) {
+      toast.error('Title and description are required');
+      return;
+    }
+
+    if (!editJobData.skillsRequired.length) {
+      toast.error('At least one skill is required');
+      return;
+    }
+
+    const payload = {
+      title: trimmedTitle,
+      type: editJobData.type,
+      department: editJobData.department,
+      experienceLevel: editJobData.experienceLevel,
+      salaryOffered: Number(editJobData.salaryOffered),
+      salaryCurrency: editJobData.salaryCurrency,
+      salaryPeriod: editJobData.salaryPeriod,
+      description: trimmedDescription,
+      skillsRequired: editJobData.skillsRequired,
+      openings: Number(editJobData.openings),
+      applicationDeadline: editJobData.applicationDeadline,
+      isOpen: editJobData.isOpen,
+    };
+
+    editJobMutation.mutate({
+      jobID: id,
+      jobData: payload,
+    });
+  };
 
   const handleScheduleInterview = () => {
     if (!scheduleDate || !scheduleTime || !selectedInterviewer || !interviewType) {
@@ -302,8 +461,8 @@ const ManageJob = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                          onClick={() => toast.info('Edit functionality coming soon')}
+                          className="flex items-center gap-2 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-colors"
+                          onClick={openEditDialog}
                         >
                           <Edit className="h-4 w-4" />
                           <span className="hidden sm:inline">Edit</span>
@@ -320,7 +479,8 @@ const ManageJob = () => {
                           variant="outline"
                           size="sm"
                           className="flex items-center gap-2 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors"
-                          onClick={() => toast.info('Delete functionality coming soon')}
+                          onClick={handleDeleteJob}
+                          disabled={deleteJobMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
                           <span className="hidden sm:inline">Delete</span>
@@ -686,6 +846,249 @@ const ManageJob = () => {
         </Card>
 
        
+
+
+        {/* Edit Job Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+            <DialogHeader className="border-b bg-gradient-to-r from-purple-50 to-fuchsia-50 px-4 py-4 sm:px-6">
+              <DialogTitle className="text-lg sm:text-xl">Edit Job Details</DialogTitle>
+              <DialogDescription>
+                Update job information and save changes.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 px-4 py-4 sm:px-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="edit-title">Job Title</Label>
+                  <Input
+                    id="edit-title"
+                    value={editJobData.title}
+                    onChange={(e) => setEditJobData((prev) => ({ ...prev, title: e.target.value }))}
+                    placeholder="Senior Frontend Developer"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Job Type</Label>
+                  <Select
+                    value={editJobData.type}
+                    onValueChange={(value) => setEditJobData((prev) => ({ ...prev, type: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_TYPES.map((type) => (
+                        <SelectItem key={type} value={type} className="capitalize">
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Select
+                    value={editJobData.department}
+                    onValueChange={(value) => setEditJobData((prev) => ({ ...prev, department: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_DEPARTMENTS.map((department) => (
+                        <SelectItem key={department} value={department} className="capitalize">
+                          {department}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Experience Level</Label>
+                  <Select
+                    value={editJobData.experienceLevel}
+                    onValueChange={(value) => setEditJobData((prev) => ({ ...prev, experienceLevel: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select experience level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_EXPERIENCE_LEVELS.map((level) => (
+                        <SelectItem key={level} value={level} className="capitalize">
+                          {level}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Job Status</Label>
+                  <div className="flex items-center justify-between rounded-md border border-purple-200 bg-purple-50 px-3 py-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-gray-800">
+                        {editJobData.isOpen ? 'Open for applications' : 'Closed for applications'}
+                      </span>
+                      <span className="text-xs text-gray-600">Toggle availability for candidates</span>
+                    </div>
+                    <Switch
+                      checked={editJobData.isOpen}
+                      onCheckedChange={(checked) =>
+                        setEditJobData((prev) => ({ ...prev, isOpen: checked }))
+                      }
+                      aria-label="Toggle job open status"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-salary-offered">Salary Offered</Label>
+                  <Input
+                    id="edit-salary-offered"
+                    type="number"
+                    min="0"
+                    value={editJobData.salaryOffered}
+                    onChange={(e) => setEditJobData((prev) => ({ ...prev, salaryOffered: e.target.value }))}
+                    placeholder="50000"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <Select
+                    value={editJobData.salaryCurrency}
+                    onValueChange={(value) => setEditJobData((prev) => ({ ...prev, salaryCurrency: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_SALARY_CURRENCIES.map((currency) => (
+                        <SelectItem key={currency} value={currency}>
+                          {currency}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Salary Period</Label>
+                  <Select
+                    value={editJobData.salaryPeriod}
+                    onValueChange={(value) => setEditJobData((prev) => ({ ...prev, salaryPeriod: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Salary period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_SALARY_PERIODS.map((period) => (
+                        <SelectItem key={period} value={period} className="capitalize">
+                          {period}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-openings">Openings</Label>
+                  <Input
+                    id="edit-openings"
+                    type="number"
+                    min="1"
+                    value={editJobData.openings}
+                    onChange={(e) => setEditJobData((prev) => ({ ...prev, openings: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="edit-deadline">Application Deadline</Label>
+                  <Input
+                    id="edit-deadline"
+                    type="date"
+                    value={editJobData.applicationDeadline}
+                    onChange={(e) => setEditJobData((prev) => ({ ...prev, applicationDeadline: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="edit-description">Job Description</Label>
+                  <Textarea
+                    id="edit-description"
+                    className="min-h-[120px]"
+                    value={editJobData.description}
+                    onChange={(e) => setEditJobData((prev) => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe role responsibilities, expectations, and growth opportunities..."
+                  />
+                </div>
+
+                <div className="space-y-3 sm:col-span-2">
+                  <Label htmlFor="edit-skills">Required Skills</Label>
+                  <Input
+                    id="edit-skills"
+                    value={editSkillInput}
+                    onChange={(e) => setEditSkillInput(e.target.value)}
+                    onKeyDown={handleEditSkillInput}
+                    placeholder="Type a skill and press Enter"
+                  />
+
+                  {editJobData.skillsRequired.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {editJobData.skillsRequired.map((skill) => (
+                        <Badge key={skill} variant="secondary" className="flex items-center gap-1 px-3 py-1">
+                          <span>{skill}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeEditSkill(skill)}
+                            className="rounded-full p-0.5 transition-colors hover:bg-black/10"
+                            aria-label={`Remove ${skill}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t px-4 py-4 sm:px-6">
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                disabled={editJobMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditJobSubmit}
+                disabled={editJobMutation.isPending}
+                className="bg-[#5b30a6] hover:bg-[#4a2788]"
+              >
+                {editJobMutation.isPending ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* Cover Letter Dialog */}
         <Dialog open={coverLetterDialogOpen} onOpenChange={setCoverLetterDialogOpen}>

@@ -10,6 +10,10 @@ import moment from "moment";
 import { sendInterviewInfoToInterviewer } from "../templates/interviewInfoToInterviewer.js";
 import { sendInterviewInfoEmailToCandidate } from "../templates/interviewInfoToCandidate.js";
 import { sendCandidateShortlistedEmail } from "../templates/candidateShortlisted.js";
+import {
+  sendInterviewUpdateInfoToCandidate,
+  sendInterviewUpdateInfoToInterviewer,
+} from "../templates/interviewUpdated.js";
 import { emailQueue, emailQueueName } from "../Jobs/sendEmailJob.js";
 import FinalReportModel from "../models/finalReport.model.js";
 import InterviewerEvaluation from "../models/InterviewerEvaluation.model.js";
@@ -492,4 +496,138 @@ export const shortlistCandidateForInterview = asyncHandler(async (req, res) => {
   }
 
   return res.status(200).json(new ApiResponse(200, "Candidate shortlisted successfully"));
+});
+
+//edit interview details
+export const updateInterviewDetails = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const interview = await InterviewModel.findById(id);
+  if (!interview) {
+    throw new ApiError(404, "Interview not found");
+  }
+
+  if (interview.status === 'completed' || interview.currentlyRunning || interview.isInterviewerJoined) {
+    throw new ApiError(400, "Cannot edit interview details after it has started or completed");
+  }
+
+  if (interview.scheduledAt.getTime() <= Date.now()) {
+      throw new ApiError(400, "Cannot reschedule interview that has already started");
+  }
+
+  const dataToUpdate = {};
+  let isInterviewerChanged = false;
+  let isRescheduled = false;
+  let isInterviewTypeChanged = false;
+  let isNotesChanged = false;
+
+  if (req.body.interviewerAssigned){
+    const interviewer = await UserModel.findById(req.body.interviewerAssigned);
+    if (!interviewer || !['recruiter', 'admin'].includes(interviewer.role)) {
+      throw new ApiError(404, "Interviewer not found or not authorized");
+    }
+    if (interview.interviewerAssigned.toString() !== req.body.interviewerAssigned) {
+      isInterviewerChanged = true;
+    }
+    dataToUpdate.interviewerAssigned = req.body.interviewerAssigned;
+
+  }
+ 
+  if (req.body.scheduledAt){
+    const scheduledTime = new Date(req.body.scheduledAt);
+    if (scheduledTime <= new Date()) {
+      throw new ApiError(400, "Scheduled time must be in the future");
+    }
+    if (interview.scheduledAt.getTime() !== scheduledTime.getTime()) {
+      isRescheduled = true;
+    }
+
+    dataToUpdate.scheduledAt = scheduledTime;
+  }
+
+  if (req.body.interviewType) {
+    if (!["frontend", "backend", "fullstack"].includes(req.body.interviewType)) {
+      throw new ApiError(400, "Invalid interview type");
+    }
+    if (interview.interviewType !== req.body.interviewType) {
+      isInterviewTypeChanged = true;
+    }
+    dataToUpdate.interviewType = req.body.interviewType;
+  }
+
+  
+  if (req.body.notes !== undefined && typeof req.body.notes === "string") {
+    if ((interview.notes || "") !== req.body.notes) {
+      isNotesChanged = true;
+    }
+    dataToUpdate.notes = req.body.notes;
+  }
+
+  if (Object.keys(dataToUpdate).length === 0) {
+    throw new ApiError(400, "No interview details provided to update");
+  }
+
+  const updatedInterview = await InterviewModel.findByIdAndUpdate(id, dataToUpdate, {
+    new: true,
+  });
+
+  const [candidateInfo, interviewerInfo, jobInfo] = await Promise.all([
+    UserModel.findById(interview.candidateSelected).select("username email"),
+    UserModel.findById(updatedInterview.interviewerAssigned).select("username email"),
+    JobModel.findById(interview.job).select("title department type experienceLevel"),
+  ]);
+
+  if (!jobInfo) {
+    throw new ApiError(404, "Job not found");
+  }
+
+  if (isInterviewerChanged && interviewerInfo?.email) {
+    const assignedInterviewerPayload = sendInterviewInfoToInterviewer(
+      interviewerInfo.email,
+      interviewerInfo.username,
+      jobInfo.title,
+      jobInfo.department,
+      jobInfo.type,
+      jobInfo.experienceLevel,
+      updatedInterview.scheduledAt
+    );
+
+    await emailQueue.add(emailQueueName, assignedInterviewerPayload);
+  }
+
+  const isInterviewUpdated = isRescheduled || isInterviewTypeChanged || isNotesChanged;
+
+  if (isInterviewUpdated) {
+    if (candidateInfo?.email) {
+      const candidateUpdatePayload = sendInterviewUpdateInfoToCandidate(
+        candidateInfo.email,
+        candidateInfo.username,
+        jobInfo.title,
+        jobInfo.department,
+        jobInfo.type,
+        jobInfo.experienceLevel,
+        updatedInterview.scheduledAt
+      );
+      await emailQueue.add(emailQueueName, candidateUpdatePayload);
+    }
+
+    if (interviewerInfo?.email) {
+      const interviewerUpdatePayload = sendInterviewUpdateInfoToInterviewer(
+        interviewerInfo.email,
+        interviewerInfo.username,
+        jobInfo.title,
+        jobInfo.department,
+        jobInfo.type,
+        jobInfo.experienceLevel,
+        updatedInterview.scheduledAt
+      );
+      await emailQueue.add(emailQueueName, interviewerUpdatePayload);
+    }
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Interview details updated successfully"));
+
+  
 });
