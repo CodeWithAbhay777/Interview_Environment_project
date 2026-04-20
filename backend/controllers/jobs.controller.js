@@ -403,5 +403,51 @@ export const getIndividualJob = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, "Job fetched successfully!", { job, isAlreadyApplied }));
 
-})
+});
+
+
+//admin edit job
+export const editJob = asyncHandler(async (req,res) => {
+  const jobId = req.params?.id;
+
+  if(!jobId) throw new ApiError(400, "Job ID is required");
+
+  const editableObject = {};
+
+  if (req.body.title) editableObject.title = req.body.title;
+  if (req.body.type) editableObject.type = req.body.type;
+  if (req.body.department) editableObject.department = req.body.department;
+  if (req.body.experienceLevel) editableObject.experienceLevel = req.body.experienceLevel;
+  if (req.body.salaryOffered) editableObject.salaryOffered = req.body.salaryOffered;
+  if (req.body.salaryCurrency) editableObject.salaryCurrency = req.body.salaryCurrency;
+  if (req.body.salaryPeriod) editableObject.salaryPeriod = req.body.salaryPeriod;
+  if (req.body.isOpen !== undefined) editableObject.isOpen = req.body.isOpen;
+  if (req.body.applicationDeadline) editableObject.applicationDeadline = req.body.applicationDeadline;
+
+  if (Object.keys(editableObject).length === 0) {
+    throw new ApiError(400, "At least one field is required to update");
+  }
+  await JobModel.findByIdAndUpdate(jobId, editableObject);
+
+  res.status(200).json(new ApiResponse(200, "Job edited successfully!"));
+
+});
+
+
+//admin delete job
+export const deleteJob = asyncHandler(async (req,res) => {
+    const jobId = req.params?.id;
+
+    if(!jobId) throw new ApiError(400, "Job ID is required");
+
+  const deletedJob = await JobModel.findByIdAndDelete(jobId);
+
+  if (!deletedJob) throw new ApiError(404, "Job not found");
+
+  res.status(200).json(new ApiResponse(200, "Job deleted successfully"));
+
+
+
+    
+});
 

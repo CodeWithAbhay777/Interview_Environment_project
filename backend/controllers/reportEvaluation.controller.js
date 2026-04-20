@@ -342,3 +342,6 @@ export const getCandidateReportDetail = asyncHandler(async (req, res) => {
 });
 
 
+//get detailed report for admin
+
+

@@ -13,6 +13,7 @@ import AdminJobs from "./pages/AdminJobs";
 import PostJob from "./pages/PostJob";
 import Applicants from "./pages/Applicants";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
+import NotFound from "./pages/NotFound";
 
 import JobApplicationForm from "./components/JobApplicationForm";
 import Mainlayout from "./layout/Mainlayout";
@@ -214,6 +215,12 @@ const appRouter = createBrowserRouter([
         element: <DashboardFeedback />
       }
     ],
+  },
+
+  // 404 Not Found Route - Must be last
+  {
+    path: "*",
+    element: <NotFound />,
   },
 ]);
 function App() {

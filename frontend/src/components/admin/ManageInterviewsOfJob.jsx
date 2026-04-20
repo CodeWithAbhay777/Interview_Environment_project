@@ -2,10 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetInterviewsByJob } from '@/hooks/queries/useGetInterviewsByJob';
 import { useGetIndividualJobForAdmin } from '@/hooks/queries/useGetIndividualJobForAdmin';
+import { useGetAllInterviewers } from '@/hooks/queries/useGetAllInterviewers';
 import { format } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { updateInterviewCandidateSelection } from '@/api/interviews/updateInterviewCandidateSelection';
+import { updateInterviewDetails } from '@/api/interviews/updateInterviewDetails';
 
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { 
   Select, 
@@ -44,6 +47,7 @@ import {
   Dialog, 
   DialogContent, 
   DialogDescription, 
+  DialogFooter,
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog';
@@ -91,6 +95,12 @@ const ManageInterviewsOfJob = () => {
   const [updatingSelectionByInterviewId, setUpdatingSelectionByInterviewId] = useState({});
   const [selectionConfirmOpen, setSelectionConfirmOpen] = useState(false);
   const [pendingSelectionAction, setPendingSelectionAction] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editInterviewDate, setEditInterviewDate] = useState('');
+  const [editInterviewTime, setEditInterviewTime] = useState('');
+  const [editInterviewerAssigned, setEditInterviewerAssigned] = useState('');
+  const [editInterviewType, setEditInterviewType] = useState('');
+  const [editInterviewNotes, setEditInterviewNotes] = useState('');
   
   const { id } = useParams();
   const navigate = useNavigate();
@@ -111,11 +121,13 @@ const ManageInterviewsOfJob = () => {
     page, 
     limit 
   });
+  const { data: interviewersData, isLoading: interviewersLoading } = useGetAllInterviewers();
 
   const job = jobData?.data;
   const interviews = interviewsData?.data?.interviews || [];
   const totalInterviews = interviewsData?.data?.totalInterviews || 0;
   const totalPages = interviewsData?.data?.totalPages || 1;
+  const availableInterviewers = interviewersData?.data || [];
 
   useEffect(() => {
     const mappedSelections = interviews.reduce((acc, interview) => {
@@ -157,6 +169,22 @@ const ManageInterviewsOfJob = () => {
 
       toast.error(error?.response?.data?.message || error?.message || 'Failed to update candidate selection status');
       refetch();
+    }
+  });
+
+  const editInterviewMutation = useMutation({
+    mutationFn: ({ interviewId, interviewData }) => updateInterviewDetails(interviewId, interviewData),
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Interview updated successfully');
+      setEditDialogOpen(false);
+      setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['jobInterviews'] });
+      queryClient.invalidateQueries({ queryKey: ['candidateInterviews'] });
+      queryClient.invalidateQueries({ queryKey: ['recruiterInterviews'] });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error?.response?.data?.message || error?.message || 'Failed to update interview');
     }
   });
 
@@ -205,6 +233,93 @@ const ManageInterviewsOfJob = () => {
   const openInterviewDialog = (interview) => {
     setSelectedInterview(interview);
     setDialogOpen(true);
+  };
+
+  const toInputDate = (dateValue) => {
+    if (!dateValue) return '';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '';
+    return format(date, 'yyyy-MM-dd');
+  };
+
+  const toInputTime = (dateValue) => {
+    if (!dateValue) return '';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '';
+    return format(date, 'HH:mm');
+  };
+
+  const openEditInterviewDialog = (interview) => {
+    if (!interview) return;
+
+    setEditInterviewerAssigned(interview?.interviewer?._id || '');
+    setEditInterviewType(interview?.interviewType || '');
+    setEditInterviewNotes(interview?.notes || '');
+    setEditInterviewDate(toInputDate(interview?.scheduledAt));
+    setEditInterviewTime(toInputTime(interview?.scheduledAt));
+    setEditDialogOpen(true);
+  };
+
+  const closeEditInterviewDialog = () => {
+    setEditDialogOpen(false);
+    setEditInterviewerAssigned('');
+    setEditInterviewType('');
+    setEditInterviewNotes('');
+    setEditInterviewDate('');
+    setEditInterviewTime('');
+  };
+
+  const handleEditInterviewSubmit = () => {
+    if (!selectedInterview?._id) {
+      toast.error('No interview selected to update');
+      return;
+    }
+
+    if (!editInterviewerAssigned || !editInterviewType || !editInterviewDate || !editInterviewTime) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
+    const payload = {};
+    const currentInterviewerId = selectedInterview?.interviewer?._id;
+    const currentInterviewType = selectedInterview?.interviewType;
+    const currentNotes = selectedInterview?.notes || '';
+    const currentScheduledAt = new Date(selectedInterview?.scheduledAt);
+
+    if (editInterviewerAssigned !== currentInterviewerId) {
+      payload.interviewerAssigned = editInterviewerAssigned;
+    }
+
+    if (editInterviewType !== currentInterviewType) {
+      payload.interviewType = editInterviewType;
+    }
+
+    if (editInterviewNotes !== currentNotes) {
+      payload.notes = editInterviewNotes;
+    }
+
+    const updatedSchedule = new Date(editInterviewDate);
+    const [hours, minutes] = editInterviewTime.split(':');
+    updatedSchedule.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+
+    if (Number.isNaN(updatedSchedule.getTime())) {
+      toast.error('Please provide a valid date and time');
+      return;
+    }
+
+    if (updatedSchedule.getTime() !== currentScheduledAt.getTime()) {
+      payload.scheduledAt = updatedSchedule;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      toast.info('No changes detected to update');
+      return;
+    }
+
+    editInterviewMutation.mutate({
+      interviewId: selectedInterview._id,
+      interviewData: payload
+    });
   };
 
   const closeInterviewDialog = () => {
@@ -1171,24 +1286,14 @@ const ManageInterviewsOfJob = () => {
                   <div className="flex gap-2 flex-1">
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800"
                       onClick={() => {
-                        // Add edit functionality
-                        console.log('Edit interview:', selectedInterview._id);
+                        openEditInterviewDialog(selectedInterview);
                       }}
                     >
                       Edit Interview
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        // Add reschedule functionality
-                        console.log('Reschedule interview:', selectedInterview._id);
-                      }}
-                    >
-                      Reschedule
-                    </Button>
+                    
                   </div>
                 </div>
               </div>
@@ -1199,6 +1304,140 @@ const ManageInterviewsOfJob = () => {
               </div>
             )}
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={editDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeEditInterviewDialog();
+              return;
+            }
+            setEditDialogOpen(open);
+          }}
+        >
+          <DialogContent className="max-w-2xl border-purple-200 p-0">
+            <div className="rounded-t-lg bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-5 text-white">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-semibold">Edit Interview</DialogTitle>
+                <DialogDescription className="text-purple-100">
+                  Update interviewer, schedule, type, and notes for this interview.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <div className="space-y-5 px-6 py-6">
+              <div className="rounded-lg border border-purple-100 bg-purple-50/60 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-purple-700">Interview Candidate</p>
+                <p className="mt-1 text-sm font-semibold text-gray-900">
+                  {selectedInterview?.candidate?.username || 'Unknown Candidate'}
+                </p>
+                <p className="text-xs text-gray-600">{selectedInterview?.candidate?.email || 'No email available'}</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-interviewer" className="text-gray-700">Interviewer *</Label>
+                  <Select value={editInterviewerAssigned} onValueChange={setEditInterviewerAssigned}>
+                    <SelectTrigger id="edit-interviewer" className="border-purple-200 focus:ring-purple-400">
+                      <SelectValue placeholder="Choose interviewer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {interviewersLoading ? (
+                        <SelectItem value="loading" disabled>Loading interviewers...</SelectItem>
+                      ) : (
+                        availableInterviewers.map((interviewer) => (
+                          <SelectItem key={interviewer._id} value={interviewer._id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={interviewer.profilePhoto} />
+                                <AvatarFallback className="bg-purple-100 text-[10px] text-purple-700">
+                                  {(interviewer.fullname || interviewer.username || 'I').charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{interviewer.fullname || interviewer.username}</span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-interview-type" className="text-gray-700">Interview Type *</Label>
+                  <Select value={editInterviewType} onValueChange={setEditInterviewType}>
+                    <SelectTrigger id="edit-interview-type" className="border-purple-200 focus:ring-purple-400">
+                      <SelectValue placeholder="Select interview type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="frontend">Frontend Development</SelectItem>
+                      <SelectItem value="backend">Backend Development</SelectItem>
+                      <SelectItem value="fullstack">Full Stack Development</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-interview-date" className="text-gray-700">Reschedule Date *</Label>
+                  <Input
+                    id="edit-interview-date"
+                    type="date"
+                    value={editInterviewDate}
+                    onChange={(e) => setEditInterviewDate(e.target.value)}
+                    className="border-purple-200 focus-visible:ring-purple-400"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-interview-time" className="text-gray-700">Reschedule Time *</Label>
+                  <Input
+                    id="edit-interview-time"
+                    type="time"
+                    value={editInterviewTime}
+                    onChange={(e) => setEditInterviewTime(e.target.value)}
+                    className="border-purple-200 focus-visible:ring-purple-400"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="edit-interview-notes" className="text-gray-700">Notes</Label>
+                  <Textarea
+                    id="edit-interview-notes"
+                    value={editInterviewNotes}
+                    onChange={(e) => setEditInterviewNotes(e.target.value)}
+                    placeholder="Add updated interview instructions, reminders, or context..."
+                    className="min-h-[110px] border-purple-200 focus-visible:ring-purple-400"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="border-t bg-purple-50/40 px-6 py-4">
+              <Button
+                variant="outline"
+                onClick={closeEditInterviewDialog}
+                disabled={editInterviewMutation.isPending}
+                className="border-purple-200 text-purple-700 hover:bg-purple-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditInterviewSubmit}
+                disabled={editInterviewMutation.isPending}
+                className="bg-purple-600 text-white hover:bg-purple-700"
+              >
+                {editInterviewMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
