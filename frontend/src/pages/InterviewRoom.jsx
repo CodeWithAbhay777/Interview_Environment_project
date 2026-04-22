@@ -22,6 +22,11 @@ const InterviewRoom = () => {
     const navigate = useNavigate();
     const { interviewSessionData } = useSelector((state) => state.interviewSession);
 
+    const clearInterviewSession = () => {
+        sessionStorage.removeItem('sessionData');
+        dispatch(setInterviewSessionData({ sessionData: null }));
+    };
+
 
     useEffect(() => {
 
@@ -34,7 +39,7 @@ const InterviewRoom = () => {
                     const storedData = sessionStorage.getItem('sessionData');
                     if (!storedData) {
                         toast.error('No interview session data found');
-                        navigate('/');
+                        navigate('/', { replace: true });
                         return;
                     } else {
                         sessionData = JSON.parse(storedData);
@@ -46,7 +51,7 @@ const InterviewRoom = () => {
                 // Check if token exists, if not, you need to get it from backend
                 if (!sessionData.token) {
                     toast.error('Authentication token is missing. Please rejoin the interview.');
-                    navigate('/');
+                    navigate('/', { replace: true });
                     return;
                 }
 
@@ -72,8 +77,8 @@ const InterviewRoom = () => {
                 if (error.message && (error.message.includes('expired') || error.message.includes('401'))) {
                     toast.error('Your session has expired. Please rejoin the interview.');
                     // Clear expired session data
-                    sessionStorage.removeItem('sessionData');
-                    navigate('/');
+                    clearInterviewSession();
+                    navigate('/', { replace: true });
                 } else {
                     toast.error('Error initializing video call client');
                     console.error('Error initializing video call client', error);
@@ -111,7 +116,8 @@ const InterviewRoom = () => {
 
             await call.leave();
             setInCall(false);
-            navigate('/');
+            clearInterviewSession();
+            navigate('/', { replace: true });
 
         } else {
 
@@ -128,7 +134,8 @@ const InterviewRoom = () => {
                 toast.success('Interview ended successfully.');
                 await call.leave();
                 setInCall(false);
-                navigate(`/interview-scoring/${interviewSessionData.interviewId}`);
+                clearInterviewSession();
+                navigate(`/interview-scoring/${interviewSessionData.interviewId}`, { replace: true });
 
 
 
