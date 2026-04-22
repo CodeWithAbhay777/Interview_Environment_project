@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { updateInterviewCandidateSelection } from '@/api/interviews/updateInterviewCandidateSelection';
 import { updateInterviewDetails } from '@/api/interviews/updateInterviewDetails';
+import { useGetAdminInterviewReport } from '@/hooks/queries/useGetAdminInterviewReport';
 
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,6 +52,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Icons
 import { 
@@ -80,8 +82,84 @@ import {
   User2,
   CheckCircle2,
   AlertTriangle,
-  XCircle
+  XCircle,
+  BadgeCheck,
+  Brain,
+  CircleDot,
+  Sparkles,
+  FileStack
 } from 'lucide-react';
+
+const scoreTone = (score) => {
+  if (score >= 80) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+  if (score >= 60) return 'text-amber-700 bg-amber-50 border-amber-200';
+  return 'text-rose-700 bg-rose-50 border-rose-200';
+};
+
+const ReportScoreCard = ({ label, value, subtitle }) => (
+  <Card className="border-slate-200 shadow-sm">
+    <CardContent className="p-4">
+      <p className="text-xs font-medium text-slate-500">{label}</p>
+      <div className="mt-2 flex items-center gap-2">
+        <Badge className={`${scoreTone(value)} border`}>{Math.round(value || 0)}%</Badge>
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full bg-gradient-to-r from-[#7209b7] to-indigo-500"
+            style={{ width: `${Math.max(0, Math.min(100, value || 0))}%` }}
+          />
+        </div>
+      </div>
+      {subtitle ? <p className="mt-2 text-xs text-slate-500">{subtitle}</p> : null}
+    </CardContent>
+  </Card>
+);
+
+const ReportMetricCard = ({ label, value, max }) => {
+  const percent = max ? Math.round(((value || 0) / max) * 100) : 0;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-slate-900">
+        {value ?? 0} / {max}
+      </p>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-full bg-gradient-to-r from-[#7209b7] to-indigo-500" style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+};
+
+const ReportDialogSkeleton = () => (
+  <div className="space-y-6 p-4 md:p-6">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Skeleton className="h-7 w-24 rounded-full" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+          </div>
+        </div>
+        <Skeleton className="h-10 w-36 rounded-md" />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <Skeleton className="h-28 rounded-2xl" />
+      <Skeleton className="h-28 rounded-2xl" />
+      <Skeleton className="h-28 rounded-2xl" />
+    </div>
+
+    <Skeleton className="h-10 w-full max-w-md rounded-xl" />
+    <div className="space-y-4">
+      <Skeleton className="h-56 rounded-2xl" />
+      <Skeleton className="h-56 rounded-2xl" />
+    </div>
+  </div>
+);
 
 const ManageInterviewsOfJob = () => {
   const [page, setPage] = useState(1);
@@ -101,6 +179,8 @@ const ManageInterviewsOfJob = () => {
   const [editInterviewerAssigned, setEditInterviewerAssigned] = useState('');
   const [editInterviewType, setEditInterviewType] = useState('');
   const [editInterviewNotes, setEditInterviewNotes] = useState('');
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReportInterviewId, setSelectedReportInterviewId] = useState('');
   
   const { id } = useParams();
   const navigate = useNavigate();
@@ -122,12 +202,21 @@ const ManageInterviewsOfJob = () => {
     limit 
   });
   const { data: interviewersData, isLoading: interviewersLoading } = useGetAllInterviewers();
+  const {
+    data: reportData,
+    isLoading: reportLoading,
+    isError: reportIsError,
+    error: reportError,
+    refetch: refetchReport,
+    isRefetching: reportIsRefetching,
+  } = useGetAdminInterviewReport(selectedReportInterviewId);
 
   const job = jobData?.data;
   const interviews = interviewsData?.data?.interviews || [];
   const totalInterviews = interviewsData?.data?.totalInterviews || 0;
   const totalPages = interviewsData?.data?.totalPages || 1;
   const availableInterviewers = interviewersData?.data || [];
+  const report = reportData?.data;
 
   useEffect(() => {
     const mappedSelections = interviews.reduce((acc, interview) => {
@@ -233,6 +322,18 @@ const ManageInterviewsOfJob = () => {
   const openInterviewDialog = (interview) => {
     setSelectedInterview(interview);
     setDialogOpen(true);
+  };
+
+  const openReportDialog = (interview) => {
+    if (!interview?._id) return;
+
+    setSelectedReportInterviewId(interview._id);
+    setReportDialogOpen(true);
+  };
+
+  const closeReportDialog = () => {
+    setReportDialogOpen(false);
+    setSelectedReportInterviewId('');
   };
 
   const toInputDate = (dateValue) => {
@@ -355,6 +456,10 @@ const ManageInterviewsOfJob = () => {
 
     return `${Math.round(score)}%`;
   };
+
+  const hasFinalReport = (interview) => Boolean(interview?.finalReport?._id || interview?.result?.finalResult !== undefined);
+
+  const canViewFullReport = (interview) => interview?.status === 'completed' && hasFinalReport(interview);
 
   const triggerSelectionUpdate = useCallback((interviewId, isSelected) => {
     const previousSelected = selectionByInterviewId[interviewId] ?? false;
@@ -750,8 +855,8 @@ const ManageInterviewsOfJob = () => {
                       <TableHead className="w-[100px]">Time</TableHead>
                       <TableHead className="w-[120px]">Status</TableHead>
                       <TableHead className="w-[170px]">Scores</TableHead>
-                      <TableHead className="w-[160px] sticky right-[88px] z-20 bg-white shadow-[-1px_0_0_0_rgba(229,231,235,1)]">Selected</TableHead>
-                      <TableHead className="w-[88px] sticky right-0 z-20 bg-white">Actions</TableHead>
+                      <TableHead className="w-[160px] sticky right-[80px] z-20 bg-white shadow-[-1px_0_0_0_rgba(229,231,235,1)]">Selected</TableHead>
+                      <TableHead className="w-[80px] sticky right-0 z-20 bg-white">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -855,7 +960,7 @@ const ManageInterviewsOfJob = () => {
                           )}
                         </TableCell>
 
-                        <TableCell className="sticky right-[88px] z-10 bg-white shadow-[-1px_0_0_0_rgba(229,231,235,1)]">
+                        <TableCell className="sticky right-[80px] z-10 bg-white shadow-[-1px_0_0_0_rgba(229,231,235,1)]">
                           <div className="flex items-center gap-3">
                             <Switch
                               checked={isSelected}
@@ -874,15 +979,17 @@ const ManageInterviewsOfJob = () => {
                           </div>
                         </TableCell>
                         
-                        <TableCell className="sticky right-0 z-10 bg-white">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="hover:bg-blue-50 hover:text-blue-600"
-                            onClick={() => openInterviewDialog(interview)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                        <TableCell className="sticky right-0 z-20 bg-white">
+                          <div className="flex items-center justify-center">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="hover:bg-blue-50 hover:text-blue-600"
+                              onClick={() => openInterviewDialog(interview)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )})}
@@ -1005,11 +1112,11 @@ const ManageInterviewsOfJob = () => {
                         </div>
                       </div>
                       
-                      <div className="flex justify-end mt-4">
+                      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex items-center gap-2"
+                          className="flex items-center justify-center gap-2"
                           onClick={() => openInterviewDialog(interview)}
                         >
                           <Eye className="h-4 w-4" />
@@ -1294,6 +1401,15 @@ const ManageInterviewsOfJob = () => {
                       Edit Interview
                     </Button>
                     
+                    {canViewFullReport(selectedInterview) ? (
+                      <Button
+                        className="flex-1 flex items-center justify-center gap-2 bg-violet-600 text-white hover:bg-violet-700"
+                        onClick={() => openReportDialog(selectedInterview)}
+                      >
+                        <FileText className="h-4 w-4" />
+                        View Full Report
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -1303,6 +1419,344 @@ const ManageInterviewsOfJob = () => {
                 <p className="text-gray-500">No interview data available</p>
               </div>
             )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={reportDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeReportDialog();
+              return;
+            }
+
+            setReportDialogOpen(open);
+          }}
+        >
+          <DialogContent className="max-w-6xl w-[95vw] p-0 overflow-hidden border-slate-200 max-h-[92vh] sm:max-h-[95vh] focus:outline-none">
+            <div className="flex max-h-[92vh] sm:max-h-[95vh] flex-col">
+              <div className="bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-4 text-white sm:px-6">
+                <DialogHeader>
+                  <DialogTitle className="flex flex-col gap-3 text-xl sm:flex-row sm:items-center sm:justify-between">
+                    <span>Full Interview Report</span>
+                    <Badge className="w-fit bg-white/15 text-white hover:bg-white/20">
+                      {selectedReportInterviewId || 'Interview report'}
+                    </Badge>
+                  </DialogTitle>
+                  <DialogDescription className="text-violet-100">
+                    Detailed performance report with AI analysis, interviewer feedback, and candidate information.
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50">
+                {reportLoading ? (
+                  <ReportDialogSkeleton />
+                ) : reportIsError ? (
+                  <div className="flex min-h-[360px] items-center justify-center p-4 md:p-6">
+                    <Card className="w-full max-w-xl border-rose-200 bg-rose-50/60">
+                      <CardContent className="py-10 text-center">
+                        <AlertCircle className="mx-auto mb-3 h-10 w-10 text-rose-600" />
+                        <h3 className="text-lg font-semibold text-slate-900">Unable to load full report</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {reportError?.response?.data?.message || reportError?.message || 'Something went wrong while loading the report.'}
+                        </p>
+                        <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+                          <Button variant="outline" onClick={() => refetchReport()}>
+                            {reportIsRefetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Retry
+                          </Button>
+                          <Button className="bg-violet-600 text-white hover:bg-violet-700" onClick={closeReportDialog}>
+                            Close
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : !report ? (
+                  <div className="flex min-h-[360px] items-center justify-center p-4 md:p-6">
+                    <Card className="w-full max-w-xl border-slate-200">
+                      <CardContent className="py-10 text-center">
+                        <FileStack className="mx-auto mb-3 h-10 w-10 text-slate-400" />
+                        <h3 className="text-lg font-semibold text-slate-900">No report data found</h3>
+                        <p className="mt-1 text-sm text-slate-600">
+                          The interview has not produced a final report yet.
+                        </p>
+                        <Button className="mt-5 bg-violet-600 text-white hover:bg-violet-700" onClick={closeReportDialog}>
+                          Close
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : (
+                  <div className="space-y-6 p-4 md:p-6">
+                    <section className="rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 p-4 md:p-5 shadow-sm">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 space-y-2">
+                          <Badge className="bg-violet-600 text-white hover:bg-violet-600">Detailed Evaluation Report</Badge>
+                          <h2 className="text-2xl font-bold text-slate-900">
+                            {report.job?.title || 'Interview Report'}
+                          </h2>
+                          <p className="text-sm text-slate-600">
+                            Generated on {formatDateTime(report.createdAt)} • Interview type: {report.interview?.interviewType || 'N/A'}
+                          </p>
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            <Badge variant="outline" className="border-slate-200 bg-white/80 text-slate-700">
+                              Candidate: {report.candidateSelected?.username || 'Not available'}
+                            </Badge>
+                            <Badge variant="outline" className="border-slate-200 bg-white/80 text-slate-700">
+                              Interviewer: {report.interviewer?.username || 'Not available'}
+                            </Badge>
+                            <Badge variant="outline" className="border-slate-200 bg-white/80 text-slate-700">
+                              Status: {report.interview?.status || 'N/A'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button variant="outline" onClick={closeReportDialog} className="w-full lg:w-auto">
+                          Close
+                        </Button>
+                      </div>
+                    </section>
+
+                    <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <ReportScoreCard label="Final Score" value={report.finalScore || 0} subtitle="Combined AI and interviewer performance" />
+                      <ReportScoreCard label="AI Score" value={report.aiScorePercentage || 0} subtitle="Based on question-wise AI evaluation" />
+                      <ReportScoreCard label="Interviewer Score" value={report.interviewerScorePercentage || 0} subtitle="Based on recruiter/interviewer rubric" />
+                    </section>
+
+                    <Tabs defaultValue="overview" className="space-y-4">
+                      <TabsList className="grid w-full grid-cols-3 bg-violet-100/70 sm:w-auto sm:inline-flex">
+                        <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="interviewer">Interviewer Feedback</TabsTrigger>
+                        <TabsTrigger value="ai">AI Analysis</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="overview" className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                          <Card className="border-slate-200 xl:col-span-2">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="flex items-center gap-2 text-base text-slate-900">
+                                <Briefcase className="h-4 w-4 text-violet-600" /> Job & Interview Context
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm">
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                  <p className="text-xs text-slate-500">Role</p>
+                                  <p className="font-semibold text-slate-900">{report.job?.title || 'Not available'}</p>
+                                </div>
+                                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                  <p className="text-xs text-slate-500">Department</p>
+                                  <p className="font-semibold capitalize text-slate-900">{report.job?.department || 'Not available'}</p>
+                                </div>
+                                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                  <p className="text-xs text-slate-500">Interview Type</p>
+                                  <p className="font-semibold capitalize text-slate-900">{report.interview?.interviewType || 'Not available'}</p>
+                                </div>
+                                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                  <p className="text-xs text-slate-500">Scheduled At</p>
+                                  <p className="font-semibold text-slate-900">{formatDateTime(report.interview?.scheduledAt)}</p>
+                                </div>
+                              </div>
+
+                              <Separator />
+
+                              <div className="space-y-2">
+                                <p className="text-xs text-slate-500">Compensation</p>
+                                <p className="font-medium text-slate-900">
+                                  {typeof report.job?.salaryOffered === 'number'
+                                    ? `${report.job.salaryCurrency || ''} ${report.job.salaryOffered}`
+                                    : 'Not specified'} / {report.job?.salaryPeriod || 'period not specified'}
+                                </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-xs text-slate-500">Skills Required</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(report.job?.skillsRequired || []).length ? (
+                                    report.job.skillsRequired.map((skill) => (
+                                      <Badge key={skill} variant="outline" className="border-violet-200 text-slate-700">
+                                        {skill}
+                                      </Badge>
+                                    ))
+                                  ) : (
+                                    <p className="text-sm text-slate-500">No skills listed</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <p className="text-xs text-slate-500">Job Description</p>
+                                <p className="text-sm leading-relaxed text-slate-700">
+                                  {report.job?.description || 'Description not available'}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className="border-slate-200">
+                            <CardHeader className="pb-3">
+                              <CardTitle className="flex items-center gap-2 text-base text-slate-900">
+                                <User2 className="h-4 w-4 text-violet-600" /> Participants
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4 text-sm">
+                              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                <p className="text-xs text-slate-500">Candidate</p>
+                                <p className="font-semibold text-slate-900">{report.candidateSelected?.username || 'Not available'}</p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-slate-600">
+                                  <Mail className="h-3.5 w-3.5" /> {report.candidateSelected?.email || 'Not available'}
+                                </p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                <p className="text-xs text-slate-500">Interviewer</p>
+                                <p className="font-semibold text-slate-900">{report.interviewer?.username || 'Not available'}</p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-slate-600">
+                                  <Mail className="h-3.5 w-3.5" /> {report.interviewer?.email || 'Not available'}
+                                </p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-white p-3">
+                                <p className="mb-2 text-xs text-slate-500">Interview Flags</p>
+                                <div className="space-y-2 text-xs text-slate-700">
+                                  <p className="flex items-center gap-2">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                    Score Submitted: {report.interview?.isScoreGiven ? 'Yes' : 'No'}
+                                  </p>
+                                  <p className="flex items-center gap-2">
+                                    <CircleDot className="h-3.5 w-3.5 text-violet-600" />
+                                    Interviewer Joined: {report.interview?.isInterviewerJoined ? 'Yes' : 'No'}
+                                  </p>
+                                  <p className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-indigo-600" />
+                                    Status: {report.interview?.status || 'N/A'}
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="interviewer" className="space-y-4">
+                        <Card className="border-slate-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base text-slate-900">
+                              <BadgeCheck className="h-4 w-4 text-violet-600" /> Interviewer Evaluation Breakdown
+                            </CardTitle>
+                            <CardDescription>
+                              Human evaluation scores and recommendation captured after interview completion.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            {report.interviewerEvaluation ? (
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                  <ReportMetricCard label="Problem Solving" value={report.interviewerEvaluation.problemSolving} max={10} />
+                                  <ReportMetricCard label="Communication" value={report.interviewerEvaluation.communication} max={10} />
+                                  <ReportMetricCard label="Technical Knowledge" value={report.interviewerEvaluation.technicalKnowledge} max={10} />
+                                  <ReportMetricCard label="Confidence" value={report.interviewerEvaluation.confidence} max={10} />
+                                  <ReportMetricCard label="Overall Impression" value={report.interviewerEvaluation.overallImpression} max={10} />
+                                  <ReportMetricCard label="Total Score" value={report.interviewerEvaluation.totalScore} max={50} />
+                                </div>
+
+                                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                                  <p className="mb-1 text-sm font-semibold text-slate-900">Recommendation Note</p>
+                                  <p className="text-sm leading-relaxed text-slate-700">
+                                    {report.interviewerEvaluation.recommendationNote || 'No recommendation note was added.'}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                                <BadgeCheck className="mx-auto mb-3 h-10 w-10 text-slate-400" />
+                                <p className="font-medium text-slate-700">Interviewer evaluation is not available.</p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+
+                      <TabsContent value="ai" className="space-y-4">
+                        <Card className="border-slate-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-base text-slate-900">
+                              <Brain className="h-4 w-4 text-violet-600" /> AI Question-by-Question Evaluation
+                            </CardTitle>
+                            <CardDescription>
+                              Question, answer, scoring dimensions, and improvement suggestions for each response.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            {report.aiEvaluations?.length ? (
+                              report.aiEvaluations.map((item, index) => (
+                                <div key={item._id || `${item.question}-${index}`} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <Badge variant="outline" className="border-violet-200 text-violet-700">Question {index + 1}</Badge>
+                                    <div className="flex items-center gap-2">
+                                      <Badge className={`${scoreTone(((item.totalScore || 0) / 40) * 100)} border`}>
+                                        Score: {item.totalScore || 0} / 40
+                                      </Badge>
+                                      <Badge variant="outline" className="capitalize">{item.difficulty || 'N/A'}</Badge>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-medium text-slate-500">Question</p>
+                                    <p className="text-sm leading-relaxed text-slate-800">{item.question || 'Question not available'}</p>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-medium text-slate-500">Candidate Answer</p>
+                                    <p className="text-sm leading-relaxed text-slate-700">{item.candidateAnswer || 'Answer not available'}</p>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                                    {[
+                                      { key: 'accuracy', label: 'Accuracy' },
+                                      { key: 'depth', label: 'Depth' },
+                                      { key: 'clarity', label: 'Clarity' },
+                                      { key: 'confidence', label: 'Confidence' },
+                                    ].map((metric) => (
+                                      <div key={metric.key} className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                                        <p className="text-[11px] text-slate-500">{metric.label}</p>
+                                        <p className="text-sm font-semibold text-slate-900">{item[metric.key] || 0} / 10</p>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <div className="rounded-lg border border-violet-100 bg-violet-50/60 p-3">
+                                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-600">
+                                      <Sparkles className="h-3.5 w-3.5 text-violet-600" /> Improvement Suggestions
+                                    </p>
+                                    {(item.improvements || []).length ? (
+                                      <ul className="space-y-1.5">
+                                        {item.improvements.map((tip, tipIndex) => (
+                                          <li key={`${item._id || index}-tip-${tipIndex}`} className="flex items-start gap-2 text-sm text-slate-700">
+                                            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-violet-600" />
+                                            <span>{tip}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-sm text-slate-600">No improvements provided.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                                <Brain className="mx-auto mb-3 h-10 w-10 text-slate-400" />
+                                <p className="font-medium text-slate-700">AI evaluation details are not available.</p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
+              </div>
             </div>
           </DialogContent>
         </Dialog>

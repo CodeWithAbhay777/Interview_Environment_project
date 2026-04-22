@@ -23,6 +23,7 @@ import { getInterviewToken } from '@/api/interview/getInterviewToken';
 import { setInterviewSessionData } from '@/redux/interviewSessionDataSlice';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { toast } from 'sonner';
 
 const CandidateUpcomingInterviews = () => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -41,7 +42,7 @@ const CandidateUpcomingInterviews = () => {
     },
     onError: (error) => {
       console.log("Error while getting interview token : ", error);
-      toast.error(error.message || "Getting interview token : Something went wrong");
+      toast.error(error?.response?.data?.message || error?.message || "Getting interview token : Something went wrong");
     },
   });
 

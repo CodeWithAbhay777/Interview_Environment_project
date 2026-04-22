@@ -18,6 +18,10 @@ export const evaluateCandidateAnswer = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Question, candidate answer, and difficulty are required");
     }
 
+    if (!interviewId || !mongoose.Types.ObjectId.isValid(interviewId)) {
+        throw new ApiError(400, "Invalid Interview ID");
+    }
+
     const ai_res = await evaluateAnswersByAI({ question, candidateAnswer, difficulty });
 
     if (!ai_res.success) {
@@ -46,6 +50,10 @@ export const evaluateCandidateAnswer = asyncHandler(async (req, res) => {
 
 export const evaluateInterviewerEvaluation = asyncHandler(async (req, res) => {
     const { scores, recommendation, totalScore, percentage, interviewId } = req.body;
+
+    if (!interviewId || !mongoose.Types.ObjectId.isValid(interviewId)) {
+        throw new ApiError(400, "Invalid Interview ID");
+    }
 
     const interviewerEvaluationData = {
         interviewId,
@@ -76,7 +84,7 @@ export const evaluateInterviewerEvaluation = asyncHandler(async (req, res) => {
 export const getCandidateReports = asyncHandler(async (req, res) => {
     const candidateId = req.id;
 
-    if (!candidateId) {
+    if (!candidateId || !mongoose.Types.ObjectId.isValid(candidateId)) {
         throw new ApiError(401, "Unauthorized request");
     }
 
@@ -154,7 +162,7 @@ export const getCandidateReportDetail = asyncHandler(async (req, res) => {
     const candidateId = req.id;
     const { reportId } = req.params;
 
-    if (!candidateId) {
+    if (!candidateId || !mongoose.Types.ObjectId.isValid(candidateId)) {
         throw new ApiError(401, "Unauthorized request");
     }
 
@@ -343,5 +351,173 @@ export const getCandidateReportDetail = asyncHandler(async (req, res) => {
 
 
 //get detailed report for admin
+export const getCandidateReportDetailForAdmin = asyncHandler(async (req, res) => {
+    const { interviewId } = req.params;
+
+    if (!interviewId || !mongoose.Types.ObjectId.isValid(interviewId)) {
+        throw new ApiError(400, "Invalid interview id");
+    }
+
+    const interviewObjectId = new mongoose.Types.ObjectId(interviewId);
+
+    const detailedReport = await FinalReportModel.aggregate([
+        {
+            $match: {
+                interviewId: interviewObjectId,
+            },
+        },
+        {
+            $lookup: {
+                from: InterviewModel.collection.name,
+                localField: "interviewId",
+                foreignField: "_id",
+                as: "interview",
+            },
+        },
+        {
+            $unwind: "$interview",
+        },
+        {
+            $lookup: {
+                from: JobModel.collection.name,
+                localField: "interview.job",
+                foreignField: "_id",
+                as: "job",
+            },
+        },
+        {
+            $lookup: {
+                from: UserModel.collection.name,
+                localField: "interview.candidateSelected",
+                foreignField: "_id",
+                as: "candidateSelected",
+            },
+        },
+        {
+            $lookup: {
+                from: UserModel.collection.name,
+                localField: "interview.interviewerAssigned",
+                foreignField: "_id",
+                as: "interviewer",
+            },
+        },
+        {
+            $lookup: {
+                from: AIEvaluation.collection.name,
+                let: { interviewDocId: "$interview._id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ["$interview_Id", "$$interviewDocId"] },
+                        },
+                    },
+                    {
+                        $sort: { createdAt: 1 },
+                    },
+                ],
+                as: "aiEvaluations",
+            },
+        },
+        {
+            $lookup: {
+                from: InterviewerEvaluation.collection.name,
+                localField: "interview._id",
+                foreignField: "interviewId",
+                as: "interviewerEvaluation",
+            },
+        },
+        {
+            $set: {
+                job: { $arrayElemAt: ["$job", 0] },
+                candidateSelected: { $arrayElemAt: ["$candidateSelected", 0] },
+                interviewer: { $arrayElemAt: ["$interviewer", 0] },
+                interviewerEvaluation: { $arrayElemAt: ["$interviewerEvaluation", 0] },
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                interviewId: 1,
+                aiScorePercentage: 1,
+                interviewerScorePercentage: 1,
+                finalScore: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                interview: {
+                    _id: "$interview._id",
+                    interviewType: "$interview.interviewType",
+                    scheduledAt: "$interview.scheduledAt",
+                    notes: "$interview.notes",
+                    status: "$interview.status",
+                    isScoreGiven: "$interview.isScoreGiven",
+                    currentlyRunning: "$interview.currentlyRunning",
+                    isInterviewerJoined: "$interview.isInterviewerJoined",
+                    roomId: "$interview.roomId",
+                },
+                job: {
+                    _id: "$job._id",
+                    title: "$job.title",
+                    department: "$job.department",
+                    type: "$job.type",
+                    description: "$job.description",
+                    experienceLevel: "$job.experienceLevel",
+                    skillsRequired: "$job.skillsRequired",
+                    salaryOffered: "$job.salaryOffered",
+                    salaryPeriod: "$job.salaryPeriod",
+                    salaryCurrency: "$job.salaryCurrency",
+                },
+                candidateSelected: {
+                    _id: "$candidateSelected._id",
+                    username: "$candidateSelected.username",
+                    email: "$candidateSelected.email",
+                },
+                interviewer: {
+                    _id: "$interviewer._id",
+                    username: "$interviewer.username",
+                    email: "$interviewer.email",
+                },
+                interviewerEvaluation: {
+                    _id: "$interviewerEvaluation._id",
+                    problemSolving: "$interviewerEvaluation.problemSolving",
+                    communication: "$interviewerEvaluation.communication",
+                    technicalKnowledge: "$interviewerEvaluation.technicalKnowledge",
+                    confidence: "$interviewerEvaluation.confidence",
+                    overallImpression: "$interviewerEvaluation.overallImpression",
+                    totalScore: "$interviewerEvaluation.totalScore",
+                    percentage: "$interviewerEvaluation.percentage",
+                    recommendationNote: "$interviewerEvaluation.recommendationNote",
+                    createdAt: "$interviewerEvaluation.createdAt",
+                },
+                aiEvaluations: {
+                    $map: {
+                        input: "$aiEvaluations",
+                        as: "ai",
+                        in: {
+                            _id: "$$ai._id",
+                            question: "$$ai.question",
+                            candidateAnswer: "$$ai.candidateAnswer",
+                            difficulty: "$$ai.difficulty",
+                            accuracy: "$$ai.accuracy",
+                            depth: "$$ai.depth",
+                            clarity: "$$ai.clarity",
+                            confidence: "$$ai.confidence",
+                            totalScore: "$$ai.totalScore",
+                            improvements: "$$ai.improvements",
+                            createdAt: "$$ai.createdAt",
+                        },
+                    },
+                },
+            },
+        },
+    ]);
+
+    if (!detailedReport.length) {
+        throw new ApiError(404, "Detailed report not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, "Admin detailed report fetched successfully", detailedReport[0]));
+});
 
 

@@ -157,13 +157,11 @@ export const getAllInterviewsOfJob = asyncHandler(async (req, res) => {
 
   page = parseInt(page) < 1 ? 1 : parseInt(page);
   limit = parseInt(limit) < 1 ? 10 : parseInt(limit);
-  if (!jobId) {
-    throw new ApiError(400, "jobId is required");
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(jobId)) {
+  
+  if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
     throw new ApiError(400, "Invalid jobId");
   }
+
 
   const jobObjectId = new mongoose.Types.ObjectId(jobId);
   const skip = (page - 1) * limit;
@@ -321,8 +319,8 @@ export const updateInterviewStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status, currentlyRunning } = req.body;
 
-  if (!id) {
-    throw new ApiError(400, "Interview ID is required");
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid Interview ID");
   }
 
   if (status && !['scheduled', 'completed', 'cancelled'].includes(status)) {
@@ -365,8 +363,8 @@ export const updateInterviewStatus = asyncHandler(async (req, res) => {
 export const getInterviewById = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  if (!id) {
-    throw new ApiError(400, "Interview ID is required");
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid Interview ID");
   }
 
   const interview = await InterviewModel.findById(id)
@@ -455,8 +453,8 @@ export const shortlistCandidateForInterview = asyncHandler(async (req, res) => {
     throw new ApiError(400, "isCandidateSelected must be a string with value 'selected' or 'pending'");
   }
 
-  if (!id) {
-    throw new ApiError(400, "Interview ID is required");
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid Interview ID");
   }
 
   const interview = await InterviewModel.findById(id);
@@ -501,6 +499,10 @@ export const shortlistCandidateForInterview = asyncHandler(async (req, res) => {
 //edit interview details
 export const updateInterviewDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
+
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid Interview ID");
+  }
 
   const interview = await InterviewModel.findById(id);
   if (!interview) {

@@ -1,10 +1,10 @@
 import React from 'react'
-import useGetAllJobs from '@/hooks/useGetAllJobs'
+
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import CategoryCarousel from '@/components/CategoryCarousel'
+
 import {
   ArrowRight,
   Bot,
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 
 const Home = () => {
-  useGetAllJobs();
+  
   const { user } = useSelector(store => store.auth);
   const navigate = useNavigate();
 

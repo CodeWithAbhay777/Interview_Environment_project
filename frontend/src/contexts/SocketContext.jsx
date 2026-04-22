@@ -4,11 +4,13 @@ import io from 'socket.io-client';
 
 const SocketContext = createContext();
 
-const SERVER_URL = import.meta.env.VITE_BACKEND_URL;
+
 
 export const SocketProvider = ({ children, user }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [socket, setSocket] = useState(null);
+
+    const SERVER_URL = import.meta.env.VITE_BACKEND_URL;
 
     const socketConnection = useMemo(() => {
     if (!user) {
