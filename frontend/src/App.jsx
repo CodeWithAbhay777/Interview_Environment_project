@@ -31,12 +31,14 @@ import CandidateProfileFormProtectedRoutes from "./layout/CandidateProfileFormPr
 import RecruiterProfileFormProtectedRoutes from "./layout/RecruiterProfileFormProtectedRoutes";
 import CandidateProtectedRoute from "./layout/CandidateProtectedRoute";
 import RecruiterProtectedRoute from "./layout/RecruiterProtectedRoute";
+import RouteErrorFallback from "./components/shared/RouteErrorFallback";
 
 
 const appRouter = createBrowserRouter([
   {
     path: "/",
     element: <Mainlayout />,
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         path: "/",
@@ -140,6 +142,7 @@ const appRouter = createBrowserRouter([
 
   {
     path: "interview/room",
+    errorElement: <RouteErrorFallback />,
     element: (
       <InterviewProtectedRoute>
         <InterviewRoom />
@@ -149,6 +152,7 @@ const appRouter = createBrowserRouter([
 
   {
     path: "interview-scoring/:interviewId",
+    errorElement: <RouteErrorFallback />,
     element: (
       <EndInterviewProtectedRoute>
         <InterviewScoring />
@@ -159,6 +163,7 @@ const appRouter = createBrowserRouter([
   // ADMIN ROUTES
   {
     path: "/admin/dashboard",
+    errorElement: <RouteErrorFallback />,
     element: (
       <ProtectedRouteLayout>
         <AdminProtectedRoutes>
