@@ -11,8 +11,8 @@ export const isValidPersonToEndInterview = asyncHandler(async(req, res, next) =>
     const {interviewId} = req.body;
     const userId = req.id;
 
-    if (!interviewId) {
-        throw new ApiError(400, "Interview ID is required");
+    if (!interviewId || !mongoose.Types.ObjectId.isValid(interviewId)) {
+        throw new ApiError(400, "Invalid Interview ID");
     }
 
     const interviewData = await InterviewModel.findById(interviewId);

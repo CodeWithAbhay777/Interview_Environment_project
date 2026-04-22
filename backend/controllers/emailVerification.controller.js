@@ -6,6 +6,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { emailQueue, emailQueueName } from '../Jobs/sendEmailJob.js';
+import { mongo } from 'mongoose';
 
 export const sendVerificationCode = asyncHandler(async (req, res) => {
     
@@ -38,6 +39,10 @@ export const verifyEmailCode = asyncHandler(async (req, res) => {
     
     if (!email || !code || !id) {
         throw new ApiError(400, "Email and code are required");
+    }
+
+    if (!mongo.Types.ObjectId.isValid(id)) {
+        throw new ApiError(400, "Invalid User ID");
     }
 
     // Retrieve from Redis

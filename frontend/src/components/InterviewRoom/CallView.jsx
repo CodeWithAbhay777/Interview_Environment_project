@@ -276,7 +276,7 @@ const CallView = ({ onLeave }) => {
 
       </div>
 
-      {chatVisibility && (<Chat chatVisibility={chatVisibility} setChatVisibility={setChatVisibility} />)}
+      <Chat chatVisibility={chatVisibility} setChatVisibility={setChatVisibility} />
       {canViewQuestions ? (
         interviewQuestionsVisibility && (
           <InterviewQuestions
@@ -294,12 +294,10 @@ const CallView = ({ onLeave }) => {
         />
       )}
 
-      {codeEditorVisibility && (
-        <CodeEditorPanel
-          codeEditorVisibility={codeEditorVisibility}
-          setCodeEditorVisibility={setCodeEditorVisibility}
-        />
-      )}
+      <CodeEditorPanel
+        codeEditorVisibility={codeEditorVisibility}
+        setCodeEditorVisibility={setCodeEditorVisibility}
+      />
 
       {canViewResume ? (
         <ResumeViewer

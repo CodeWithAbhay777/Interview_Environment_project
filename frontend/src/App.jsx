@@ -3,19 +3,9 @@ import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import Home from "./pages/Home";
 import Jobs from "./pages/Jobs";
-import Browse from "./pages/Browse";
 import Profile from "./pages/Profile";
 import JobDescription from "./pages/JobDescription";
-import Companies from "./pages/Companies";
-import CompanyCreate from "./pages/CompanyCreate";
-import CompanySetup from "./pages/CompanySetup";
-import AdminJobs from "./pages/AdminJobs";
-import PostJob from "./pages/PostJob";
-import Applicants from "./pages/Applicants";
-import ProtectedRoute from "./components/admin/ProtectedRoute";
 import NotFound from "./pages/NotFound";
-
-import JobApplicationForm from "./components/JobApplicationForm";
 import Mainlayout from "./layout/Mainlayout";
 import CandidateProfileForm from "./pages/CandidateProfileForm";
 import RecruiterProfileForm from "./pages/RecruiterProfileForm";
@@ -23,7 +13,6 @@ import AdminDashboardLayout from "./layout/AdminDashboardLayout";
 import DashboardJobs from "./components/admin/DashboardJobs";
 import ProtectedRouteLayout from "./layout/ProtectedRouteLayout";
 import CreateJobsForm from "./components/admin/CreateJobsForm";
-
 import ManageJob from "./components/admin/ManageJob";
 import ManageInterviewsOfJob from "./components/admin/ManageInterviewsOfJob";
 import DashboardInterviews from "./components/admin/DashboardInterviews";
@@ -37,6 +26,11 @@ import EndInterviewProtectedRoute from "./layout/EndInterviewProtectedRoute";
 import CandidateResults from "./pages/CandidateResults";
 import CandidateReportDetail from "./pages/CandidateReportDetail";
 import About from "./pages/About";
+import AdminProtectedRoutes from "./layout/AdminProtectedRoutes";
+import CandidateProfileFormProtectedRoutes from "./layout/CandidateProfileFormProtectedRoutes";
+import RecruiterProfileFormProtectedRoutes from "./layout/RecruiterProfileFormProtectedRoutes";
+import CandidateProtectedRoute from "./layout/CandidateProtectedRoute";
+import RecruiterProtectedRoute from "./layout/RecruiterProtectedRoute";
 
 
 const appRouter = createBrowserRouter([
@@ -62,33 +56,63 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "/jobs/:id",
-        element: <JobDescription />
+
+        element: (
+          <ProtectedRouteLayout>
+            <JobDescription />
+          </ProtectedRouteLayout>
+
+        )
       },
 
       {
         path: "about",
-        element : <About />
+        element: <About />
       },
 
       {
-        path: "browse",
-        element: <Browse />,
-      },
-      {
         path: "candidate/upcoming-interviews",
-        element: <CandidateUpcomingInterviews />,
+        element: (
+          <ProtectedRouteLayout>
+            <CandidateProtectedRoute>
+              <CandidateUpcomingInterviews />
+            </CandidateProtectedRoute>
+          </ProtectedRouteLayout>
+
+        ),
       },
       {
         path: "candidate/results",
-        element: <CandidateResults />,
+        element: (
+          <ProtectedRouteLayout>
+            <CandidateProtectedRoute>
+              <CandidateResults />
+            </CandidateProtectedRoute>
+          </ProtectedRouteLayout>
+
+        ),
       },
       {
         path: "candidate/results/:reportId",
-        element: <CandidateReportDetail />,
+        element: (
+          <ProtectedRouteLayout>
+            <CandidateProtectedRoute>
+              <CandidateReportDetail />
+            </CandidateProtectedRoute>
+          </ProtectedRouteLayout>
+
+        ),
       },
       {
         path: "recruiter/upcoming-interviews",
-        element: <RecruiterUpcomingInterviews />,
+        element: (
+          <ProtectedRouteLayout>
+            <RecruiterProtectedRoute>
+              <RecruiterUpcomingInterviews />
+            </RecruiterProtectedRoute>
+          </ProtectedRouteLayout>
+
+        ),
       },
       {
         path: "profile",
@@ -96,66 +120,21 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "candidate-profile-form",
-        element: <CandidateProfileForm />,
+        element: (
+        <CandidateProfileFormProtectedRoutes>
+          <CandidateProfileForm />
+        </CandidateProfileFormProtectedRoutes>
+        ),
       },
       {
         path: "recruiter-profile-form",
-        element: <RecruiterProfileForm />,
+        element: (
+        <RecruiterProfileFormProtectedRoutes>
+          <RecruiterProfileForm />
+        </RecruiterProfileFormProtectedRoutes>
+        ),
       },
-      {
-        path: "apply",
-        element: <JobApplicationForm />,
-      },
-      // admin ke liye yha se start hoga
 
-      {
-        path: "admin/companies",
-        element: (
-          <ProtectedRoute>
-            <Companies />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/companies/create",
-        element: (
-          <ProtectedRoute>
-            <CompanyCreate />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/companies/:id",
-        element: (
-          <ProtectedRoute>
-            <CompanySetup />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/jobs",
-        element: (
-          <ProtectedRoute>
-            <AdminJobs />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/jobs/create",
-        element: (
-          <ProtectedRoute>
-            <PostJob />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "admin/jobs/:id/applicants",
-        element: (
-          <ProtectedRoute>
-            <Applicants />
-          </ProtectedRoute>
-        ),
-      },
     ],
   },
 
@@ -182,7 +161,9 @@ const appRouter = createBrowserRouter([
     path: "/admin/dashboard",
     element: (
       <ProtectedRouteLayout>
-        <AdminDashboardLayout />
+        <AdminProtectedRoutes>
+          <AdminDashboardLayout />
+        </AdminProtectedRoutes>
       </ProtectedRouteLayout>
     ),
     children: [
@@ -217,7 +198,7 @@ const appRouter = createBrowserRouter([
     ],
   },
 
-  // 404 Not Found Route - Must be last
+  // 404 Not Found Route
   {
     path: "*",
     element: <NotFound />,

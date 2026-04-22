@@ -10,8 +10,8 @@ export const submitApplication = asyncHandler(async (req, res) => {
   const { jobId, coverLetter, useExistingResume, resumeUrl } = req.body;
   const userId = req.id;
 
-  if (!jobId) {
-    throw new ApiError(400, "Job ID is required");
+  if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new ApiError(400, "Invalid Job ID");
   }
 
   if (!coverLetter) {

@@ -27,6 +27,7 @@ import { setInterviewSessionData } from '@/redux/interviewSessionDataSlice';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from "@tanstack/react-query";
 import { getInterviewToken } from '@/api/interview/getInterviewToken';
+import { toast } from 'sonner';
 
 
 
@@ -55,7 +56,7 @@ const RecruiterUpcomingInterviews = () => {
     },
     onError: (error) => {
       console.log("Error while getting interview token : ", error);
-      toast.error(error.message || "Getting interview token : Something went wrong");
+      toast.error(error?.response?.data?.message || error?.message || "Getting interview token : Something went wrong");
     },
   });
 
@@ -375,36 +376,6 @@ const RecruiterUpcomingInterviews = () => {
                         ) : interview.status === 'completed' ? 'Interview Completed' : 'Interview Cancelled'}
                       </Button>
                       
-                      {interview.status === 'scheduled' && (
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 text-xs"
-                            onClick={() => {
-                              // Future: Handle reschedule
-                              toast.info('Reschedule feature coming soon!');
-                              console.log('Reschedule interview:', interview._id);
-                            }}
-                          >
-                            <Clock className="h-3 w-3 mr-1" />
-                            Reschedule
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => {
-                              // Future: Handle cancel
-                              toast.info('Cancel feature coming soon!');
-                              console.log('Cancel interview:', interview._id);
-                            }}
-                          >
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </CardContent>

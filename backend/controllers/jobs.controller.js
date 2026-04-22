@@ -88,8 +88,8 @@ export const getAllJobsByAdmin = asyncHandler(async (req, res) => {
 export const getIndividualJobForAdmin = asyncHandler(async (req, res) => {
   const jobId = req.params?.id;
 
-  if (!jobId) {
-    throw new ApiError(400, "Job ID is required");
+  if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new ApiError(400, "Invalid Job ID");
   }
 
   const job = await JobModel.aggregate([
@@ -136,8 +136,8 @@ export const getJobInfoByAdmin = asyncHandler(async (req, res) => {
 
   
 
-  if (!jobId) {
-    throw new ApiError(400, "Job ID is required");
+  if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new ApiError(400, "Invalid Job ID");
   }
 
   if (status !== "all" && !['applied', 'interview-scheduled', 'rejected', 'interview-completed'].includes(status)) {
@@ -285,6 +285,7 @@ export const getJobsForCandidates = asyncHandler(async (req, res) => {
 
   const { search = "", department, state, jobType, experienceLevel, candidateId, appliedJobs = "false" } = req.query;
 
+
   // ---------- Base filters ----------
   const matchStage = {};
   if (department) matchStage.department = department;
@@ -391,6 +392,15 @@ export const getJobsForCandidates = asyncHandler(async (req, res) => {
 export const getIndividualJob = asyncHandler(async (req, res) => {
   const jobId = req.params?.id;
   const userID = req.id;
+
+  if (!jobId || !mongoose.Types.ObjectId.isValid(jobId)) {
+    throw new ApiError(400, "Invalid Job ID");
+  }
+  if (!userID || !mongoose.Types.ObjectId.isValid(userID)) {
+    throw new ApiError(400, "Invalid User ID");
+  }
+
+
   let isAlreadyApplied = false;
 
   const isApplicationPresent = await ApplicationModel.findOne({ job: jobId, candidateApplied: userID });
@@ -410,7 +420,7 @@ export const getIndividualJob = asyncHandler(async (req, res) => {
 export const editJob = asyncHandler(async (req,res) => {
   const jobId = req.params?.id;
 
-  if(!jobId) throw new ApiError(400, "Job ID is required");
+  if(!jobId || !mongoose.Types.ObjectId.isValid(jobId)) throw new ApiError(400, "Invalid Job ID");
 
   const editableObject = {};
 
@@ -438,7 +448,7 @@ export const editJob = asyncHandler(async (req,res) => {
 export const deleteJob = asyncHandler(async (req,res) => {
     const jobId = req.params?.id;
 
-    if(!jobId) throw new ApiError(400, "Job ID is required");
+    if(!jobId || !mongoose.Types.ObjectId.isValid(jobId)) throw new ApiError(400, "Invalid Job ID");
 
   const deletedJob = await JobModel.findByIdAndDelete(jobId);
 
