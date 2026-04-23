@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
 import {
   AlertCircle,
   ArrowLeft,
@@ -24,12 +23,13 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetCandidateReportDetail } from '@/hooks/queries/useGetCandidateReportDetail';
+import { formatUtcToIstDateTime } from '@/utils/dateTime';
 
 const formatDateTime = (value) => {
   if (!value) return 'Not available';
 
   try {
-    return format(parseISO(value), 'MMM dd, yyyy • hh:mm a');
+    return formatUtcToIstDateTime(value, 'Not available');
   } catch {
     return 'Not available';
   }

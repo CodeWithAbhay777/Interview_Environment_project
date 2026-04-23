@@ -3,12 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useGetInterviewsByJob } from '@/hooks/queries/useGetInterviewsByJob';
 import { useGetIndividualJobForAdmin } from '@/hooks/queries/useGetIndividualJobForAdmin';
 import { useGetAllInterviewers } from '@/hooks/queries/useGetAllInterviewers';
-import { format } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { updateInterviewCandidateSelection } from '@/api/interviews/updateInterviewCandidateSelection';
 import { updateInterviewDetails } from '@/api/interviews/updateInterviewDetails';
 import { useGetAdminInterviewReport } from '@/hooks/queries/useGetAdminInterviewReport';
+import {
+  formatUtcToIstDate,
+  formatUtcToIstFullDateTime,
+  formatUtcToIstTime,
+  toIstInputDate,
+  toIstInputTime,
+} from '@/utils/dateTime';
 
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -297,7 +303,7 @@ const ManageInterviewsOfJob = () => {
 
   const formatDate = (dateString) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy');
+      return formatUtcToIstDate(dateString, 'Invalid date');
     } catch {
       return 'Invalid date';
     }
@@ -305,7 +311,7 @@ const ManageInterviewsOfJob = () => {
 
   const formatTime = (dateString) => {
     try {
-      return format(new Date(dateString), 'hh:mm a');
+      return formatUtcToIstTime(dateString, 'Invalid time');
     } catch {
       return 'Invalid time';
     }
@@ -313,7 +319,7 @@ const ManageInterviewsOfJob = () => {
 
   const formatDateTime = (dateString) => {
     try {
-      return format(new Date(dateString), 'EEEE, MMMM dd, yyyy \'at\' hh:mm a');
+      return formatUtcToIstFullDateTime(dateString, 'Invalid date');
     } catch {
       return 'Invalid date';
     }
@@ -338,16 +344,12 @@ const ManageInterviewsOfJob = () => {
 
   const toInputDate = (dateValue) => {
     if (!dateValue) return '';
-    const date = new Date(dateValue);
-    if (Number.isNaN(date.getTime())) return '';
-    return format(date, 'yyyy-MM-dd');
+    return toIstInputDate(dateValue);
   };
 
   const toInputTime = (dateValue) => {
     if (!dateValue) return '';
-    const date = new Date(dateValue);
-    if (Number.isNaN(date.getTime())) return '';
-    return format(date, 'HH:mm');
+    return toIstInputTime(dateValue);
   };
 
   const openEditInterviewDialog = (interview) => {

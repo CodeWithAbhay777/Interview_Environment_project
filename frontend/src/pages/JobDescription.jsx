@@ -26,7 +26,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarIcon, BriefcaseIcon, DollarSignIcon, ClockIcon, UsersIcon, BuildingIcon, GlobeIcon, TagIcon, Eye, Circle } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatUtcToIstDate } from '@/utils/dateTime';
 import { useGetProfileQuery } from '@/hooks/queries/useGetProfileQuery';
 import { useToastOnError } from '@/hooks/useToastOnError';
 import { Switch } from '@/components/ui/switch';
@@ -107,7 +107,11 @@ const JobDescription = () => {
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         try {
-            return format(new Date(dateString), 'MMMM dd, yyyy');
+            return formatUtcToIstDate(dateString, 'Invalid date', {
+                month: 'long',
+                day: '2-digit',
+                year: 'numeric',
+            });
         } catch (e) {
             return 'Invalid date';
         }

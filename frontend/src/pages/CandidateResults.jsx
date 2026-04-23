@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
 import {
   AlertCircle,
   BarChart3,
@@ -18,12 +17,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetCandidateReports } from '@/hooks/queries/useGetCandidateReports';
+import { formatUtcToIstDate } from '@/utils/dateTime';
 
 const formatDate = (value) => {
   if (!value) return 'Date unavailable';
 
   try {
-    return format(parseISO(value), 'MMM dd, yyyy');
+    return formatUtcToIstDate(value, 'Date unavailable');
   } catch {
     return 'Date unavailable';
   }
