@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
 import { 
   Calendar, 
   Clock, 
@@ -17,6 +16,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { useGetAllInterviews } from '../../hooks/queries/useGetAllInterviews';
+import { formatUtcToIstDateTime } from '@/utils/dateTime';
 
 const DashboardInterviews = () => {
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ const DashboardInterviews = () => {
 
   const formatDateTime = (dateString) => {
     try {
-      return format(new Date(dateString), 'MMM dd, yyyy • hh:mm a');
+      return formatUtcToIstDateTime(dateString, 'Invalid Date');
     } catch (error) {
       return 'Invalid Date';
     }

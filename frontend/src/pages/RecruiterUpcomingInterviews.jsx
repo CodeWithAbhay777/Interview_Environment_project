@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, parseISO, isAfter, isBefore, addHours } from 'date-fns';
+import { parseISO, isAfter, isBefore, addHours } from 'date-fns';
 import { 
   Calendar, 
   Clock, 
@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from "@tanstack/react-query";
 import { getInterviewToken } from '@/api/interview/getInterviewToken';
 import { toast } from 'sonner';
+import { formatUtcToIstDateTime } from '@/utils/dateTime';
 
 
 
@@ -106,7 +107,7 @@ const RecruiterUpcomingInterviews = () => {
 
   const formatDateTime = (dateString) => {
     try {
-      return format(parseISO(dateString), 'MMM dd, yyyy • hh:mm a');
+      return formatUtcToIstDateTime(dateString, 'Invalid Date');
     } catch (error) {
       return 'Invalid Date';
     }

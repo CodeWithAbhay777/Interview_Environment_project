@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, parseISO, isAfter, isBefore, addHours } from 'date-fns';
+import { parseISO, isAfter, isBefore, addHours } from 'date-fns';
 import { 
   Calendar, 
   Clock, 
@@ -24,6 +24,7 @@ import { setInterviewSessionData } from '@/redux/interviewSessionDataSlice';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { toast } from 'sonner';
+import { formatUtcToIstDateTime } from '@/utils/dateTime';
 
 const CandidateUpcomingInterviews = () => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -97,7 +98,7 @@ const CandidateUpcomingInterviews = () => {
 
   const formatDateTime = (dateString) => {
     try {
-      return format(parseISO(dateString), 'MMM dd, yyyy • hh:mm a');
+      return formatUtcToIstDateTime(dateString, 'Invalid Date');
     } catch (error) {
       return 'Invalid Date';
     }
