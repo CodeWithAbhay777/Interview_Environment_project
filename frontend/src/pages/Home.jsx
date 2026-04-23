@@ -143,11 +143,11 @@ const Home = () => {
                   <ArrowRight className='ml-2 h-4 w-4' />
                 </Button>
                 <Button
-                  onClick={() => navigate('/candidate/upcoming-interviews')}
+                  onClick={() => navigate('/about')}
                   variant='outline'
                   className='h-11 border-slate-300 px-6 text-sm font-semibold text-slate-700 hover:bg-slate-100'
                 >
-                  View Interview Flow
+                  View About
                 </Button>
               </div>
 
@@ -388,7 +388,7 @@ const Home = () => {
                 variant='outline'
                 className='h-11 border-white/70 bg-transparent px-6 text-sm font-semibold text-white hover:bg-white/10'
               >
-                Interview Timeline
+                Candidate Interview Timeline
                 <MoveRight className='ml-2 h-4 w-4' />
               </Button>
             </div>
