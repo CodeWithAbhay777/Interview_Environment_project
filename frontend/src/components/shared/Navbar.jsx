@@ -25,24 +25,24 @@ import { useToastOnError } from "@/hooks/useToastOnError";
 
 const Navbar = () => {
   const { user, isAuthenticated } = useSelector((store) => store.auth);
-  
+
   const dispatch = useDispatch();
 
-  const {data : userProfile , isError : profileError} = useGetProfileQuery(user?._id, user?.role, {
-      enabled: isAuthenticated && user?.isProfileComplete,
-    });
-  
-  useToastOnError(profileError , 'Fetching profile : Something went wrong!');
+  const { data: userProfile, isError: profileError } = useGetProfileQuery(user?._id, user?.role, {
+    enabled: isAuthenticated && user?.isProfileComplete,
+  });
+
+  useToastOnError(profileError, 'Fetching profile : Something went wrong!');
 
   console.log("NAVBAR : logggged");
 
   const logoutMutation = useMutation({
-    mutationFn : logoutUser,
-    onSuccess : (data) => {
+    mutationFn: logoutUser,
+    onSuccess: (data) => {
       toast.success(data.message || "Logged out successfully");
-      dispatch(setUser({user : null , isAuthenticated : false}));
+      dispatch(setUser({ user: null, isAuthenticated: false }));
     },
-    onError : (err) => {
+    onError: (err) => {
       toast.error(err.message || "Whilte logout : Something went wrong!");
     }
   })
@@ -76,30 +76,30 @@ const Navbar = () => {
             <DropdownMenuContent className="w-[12rem]">
               <DropdownMenuLabel>{user?.role || "User"}</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link to="/">Home</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="/jobs">Job openings</Link>
-              </DropdownMenuItem>
+              <Link to="/">
+                <DropdownMenuItem>Home</DropdownMenuItem>
+              </Link>
+              <Link to="/jobs">
+                <DropdownMenuItem>Job openings</DropdownMenuItem>
+              </Link>
 
               {user?.role === "admin" && (
                 <>
-                  <DropdownMenuItem>
-                    <Link to="/admin/dashboard/jobs">Dashboard</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/recruiter/upcoming-interviews">Upcoming Interviews</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/notifications">Notifications</Link>
-                  </DropdownMenuItem>
-                  
+                  <Link to="/admin/dashboard/jobs">
+                    <DropdownMenuItem>Dashboard</DropdownMenuItem>
+                  </Link>
+                  <Link to="/profile">
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                  </Link>
+                  <Link to="/recruiter/upcoming-interviews">
+                    <DropdownMenuItem>Upcoming Interviews</DropdownMenuItem>
+                  </Link>
+                  <Link to="/notifications">
+                    <DropdownMenuItem>Notifications</DropdownMenuItem>
+                  </Link>
+
                   <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
-                  
+
                 </>
               )}
 
@@ -108,15 +108,15 @@ const Navbar = () => {
                   <Link to="/profile">
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                   </Link>
-                  <DropdownMenuItem>
-                    <Link to="/candidate/upcoming-interviews">Upcoming Interviews</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/candidate/results">Results</Link>
-                  </DropdownMenuItem>
-                  
+                  <Link to="/candidate/upcoming-interviews">
+                    <DropdownMenuItem>Upcoming Interviews</DropdownMenuItem>
+                  </Link>
+                  <Link to="/candidate/results">
+                    <DropdownMenuItem>Results</DropdownMenuItem>
+                  </Link>
+
                   <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
-                  
+
                 </>
               )}
 
@@ -126,18 +126,18 @@ const Navbar = () => {
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                   </Link>
 
-                  <DropdownMenuItem>
-                    <Link to="/recruiter/upcoming-interviews">Upcoming Interviews</Link>
-                  </DropdownMenuItem>
-                  
+                  <Link to="/recruiter/upcoming-interviews">
+                    <DropdownMenuItem>Upcoming Interviews</DropdownMenuItem>
+                  </Link>
+
                   <DropdownMenuItem onClick={logoutMutation.mutate}>Logout</DropdownMenuItem>
-                  
+
                 </>
               )}
 
-              <DropdownMenuItem>
-                <Link to="/about">About us</Link>
-              </DropdownMenuItem>
+              <Link to="/about">
+                <DropdownMenuItem>About us</DropdownMenuItem>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
