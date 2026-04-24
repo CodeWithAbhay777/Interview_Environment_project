@@ -161,8 +161,8 @@ const RecordAnswerArea = ({ answerAreaVisibility, setAnswerAreaVisibility, asked
             disabled={listening || !askedQuestionData?.question}
             className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white"
           >
-            {listening ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" />}
-            Start Answering
+            {listening ? 'Listening' : (<><Mic className="h-4 w-4" /> Start Answering</>)}
+            
           </Button>
 
           <Button

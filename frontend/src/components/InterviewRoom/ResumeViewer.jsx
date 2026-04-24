@@ -11,7 +11,10 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 
 const ResumeViewer = ({ open, onOpenChange, resumeUrl }) => {
-  const hasResume = Boolean(resumeUrl);
+  const normalizedResumeUrl = typeof resumeUrl === 'string'
+    ? resumeUrl.trim().replace(/^http:\/\//i, 'https://')
+    : '';
+  const hasResume = Boolean(normalizedResumeUrl);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -50,7 +53,7 @@ const ResumeViewer = ({ open, onOpenChange, resumeUrl }) => {
                     type="button"
                     variant="outline"
                     className="h-8 border-slate-600 bg-transparent text-xs text-slate-200 hover:bg-slate-800 hover:text-white"
-                    onClick={() => window.open(resumeUrl, '_blank', 'noopener,noreferrer')}
+                    onClick={() => window.open(normalizedResumeUrl, '_blank', 'noopener,noreferrer')}
                   >
                     Open in new tab
                     <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
@@ -60,7 +63,7 @@ const ResumeViewer = ({ open, onOpenChange, resumeUrl }) => {
                 <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-black/20">
                   <iframe
                     title="Candidate resume"
-                    src={resumeUrl}
+                    src={normalizedResumeUrl}
                     className="h-full w-full"
                     loading="lazy"
                     referrerPolicy="no-referrer"

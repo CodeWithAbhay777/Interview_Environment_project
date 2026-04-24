@@ -38,6 +38,7 @@
     "lucide-react": "^0.395.0",
     "next-themes": "^0.3.0",
     "react": "^18.2.0",
+    "react-big-calendar": "^1.19.4",
     "react-day-picker": "^9.9.0",
     "react-dom": "^18.2.0",
     "react-pdf": "^10.1.0",
