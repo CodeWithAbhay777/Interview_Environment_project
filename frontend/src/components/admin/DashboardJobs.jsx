@@ -8,6 +8,7 @@ import { useGetAdminJobs } from "@/hooks/queries/useGetAdminJobs";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
+import { useDebouncedValue } from "@/hooks/useDebounceValue";
 
 const DashboardJobs = () => {
   const [state, setState] = useState([
@@ -25,13 +26,15 @@ const DashboardJobs = () => {
     },
   ]);
 
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [department, setDepartment] = useState("");
   const [page, setPage] = useState(1);
   const limit = useRef(10);
+  const debouncedSearch = useDebouncedValue(searchInput, 500);
 
   const filterChange = (filter) => {
     if (!filter) return;
+    setPage(1);
     setState((prev) =>
       prev.map((f) => ({
         ...f,
@@ -44,12 +47,12 @@ const DashboardJobs = () => {
   const { data: jobsData, isLoading, isError , error, refetch } = useGetAdminJobs({
     page,
     limit: limit.current,
-    search,
+    search: debouncedSearch,
     department,
     state: state.find((s) => s.isActive)?.type.toLowerCase() || "all",
   });
 
-  
+
 
   const jobs = jobsData?.data?.jobs || [];
   const totalJobs = jobsData?.data?.totalJobs || 0;
@@ -78,7 +81,10 @@ const DashboardJobs = () => {
 
           {/* filter department */}
 
-          <Select onValueChange={(val) => setDepartment(val === "all" ? "" : val)}>
+          <Select onValueChange={(val) => {
+            setPage(1);
+            setDepartment(val === "all" ? "" : val);
+          }}>
             <SelectTrigger className="w-full sm:flex-1 md:w-[180px] h-12 border">
               <SelectValue placeholder="Filter by department" />
             </SelectTrigger>
@@ -102,7 +108,15 @@ const DashboardJobs = () => {
         </Link>
       </div>
       <div id="all-jobs-block" className="border-t mt-4 w-full rounded  p-2 flex flex-col h-[calc(100vh-200px)] justify-center items-center ">
-        <Input placeholder="Filter by title" className="w-full" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input
+          placeholder="Filter by title"
+          className="w-full"
+          value={searchInput}
+          onChange={(e) => {
+            setPage(1);
+            setSearchInput(e.target.value);
+          }}
+        />
 
         <div className="w-full flex flex-col flex-1 mt-3 overflow-y-auto">
 
