@@ -55,6 +55,15 @@ const scoreTone = (score) => {
   return 'text-rose-700 bg-rose-50 border-rose-200';
 };
 
+const getAiQuestionMaxMarks = (difficulty) => {
+  const normalizedDifficulty = String(difficulty || '').toLowerCase();
+
+  if (normalizedDifficulty === 'easy') return 32;
+  if (normalizedDifficulty === 'hard') return 48;
+
+  return 40;
+};
+
 const ScoreCard = ({ label, value, subtitle }) => (
   <Card className="border-slate-200 shadow-sm">
     <CardContent className="p-4">
@@ -357,13 +366,17 @@ const CandidateReportDetail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {aiItems.length ? (
-                  aiItems.map((item, index) => (
+                  aiItems.map((item, index) => {
+                    const maxMarks = getAiQuestionMaxMarks(item.difficulty);
+                    const scorePercent = ((item.totalScore || 0) / maxMarks) * 100;
+
+                    return (
                     <div key={item._id || `${item.question}-${index}`} className="rounded-xl border border-slate-200 bg-white p-4 space-y-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <Badge variant="outline" className="border-violet-200 text-[#7209b7]">Question {index + 1}</Badge>
                         <div className="flex items-center gap-2">
-                          <Badge className={`${scoreTone(((item.totalScore || 0) / 40) * 100)} border`}>
-                            Score: {item.totalScore || 0} / 40
+                          <Badge className={`${scoreTone(scorePercent)} border`}>
+                            Score: {item.totalScore || 0} / {maxMarks}
                           </Badge>
                           <Badge variant="outline" className="capitalize">{item.difficulty || 'N/A'}</Badge>
                         </div>
@@ -414,7 +427,8 @@ const CandidateReportDetail = () => {
                         )}
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
                     <Brain className="h-10 w-10 text-slate-400 mx-auto mb-3" />
