@@ -22,12 +22,7 @@ const RecordAnswerArea = ({ answerAreaVisibility, setAnswerAreaVisibility, asked
     onSuccess: async () => {
       const cleanedTranscript = transcript.trim();
 
-      try {
-        await navigator.clipboard.writeText(cleanedTranscript);
-        toast.success('Answer submitted and copied to clipboard.');
-      } catch {
-        toast.success('Answer submitted successfully.');
-      }
+      toast.success('Answer submitted successfully.');
 
       resetTranscript();
     },
