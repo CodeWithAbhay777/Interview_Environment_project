@@ -51,6 +51,7 @@ const RecordAnswerArea = ({ answerAreaVisibility, setAnswerAreaVisibility, asked
 
   const stopAnswerRecording = () => {
     SpeechRecognition.stopListening();
+    SpeechRecognition.abortListening();
   };
 
   const submitAnswer = () => {
