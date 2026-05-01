@@ -81,8 +81,9 @@ function InterviewQuestions({ interviewQuestions = [], setInterviewQuestionsVisi
 
     try {
       sessionStorage.setItem(ASKED_QUESTIONS_STORAGE_KEY, JSON.stringify(askedQuestions));
-    } catch {
+    } catch(err) {
       // Skip persistence if sessionStorage is not available.
+      console.log(err.message)
     }
   }, [askedQuestions, hasHydratedAskedQuestions]);
 
@@ -95,10 +96,11 @@ function InterviewQuestions({ interviewQuestions = [], setInterviewQuestionsVisi
     }
 
     try {
-      await navigator.clipboard.writeText(questionText);
-      toast.success('Question copied. Ask it now.');
-    } catch {
-      toast.info('Question selected. Clipboard permission unavailable.');
+      
+      toast.success('Question asked successfully.');
+    } catch (err) {
+      console.log(err.message);
+      toast.info('Failed to ask question.');
     }
 
     setAskedQuestions((prev) => (prev.includes(questionId) ? prev : [...prev, questionId]));
