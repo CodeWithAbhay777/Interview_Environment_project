@@ -84,6 +84,7 @@ const JobDescription = () => {
 
     const job = jobData?.data?.job || {};
     const isAlreadyApplied = jobData?.data?.isAlreadyApplied || false;
+    job.isOpen = job.isOpen && new Date(job.applicationDeadline) > new Date(); // Check if the job is still open based on the application deadline
 
     // Format the salary with currency
     const formatSalary = () => {

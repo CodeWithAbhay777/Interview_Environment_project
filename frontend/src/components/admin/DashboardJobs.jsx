@@ -143,41 +143,51 @@ const DashboardJobs = () => {
               {!isLoading && jobs.length === 0 && <p className="">No jobs found</p>}
 
               <div className="mt-2 space-y-2">
-                {jobs.map((job) => (
+                {jobs.map((job) => {
+                  const deadline = new Date(job.applicationDeadline);
+                  const isDeadlineReached =
+                    !Number.isNaN(deadline.getTime()) && deadline.getTime() <= Date.now();
 
-                  <div className="border w-full h-32 rounded p-2 md:p-3 shadow-md flex" key={job._id}>
+                  return (
+                    <div className="border w-full h-32 rounded p-2 md:p-3 shadow-md flex" key={job._id}>
 
-                    <div id="left" className="w-[92%] h-full ">
-                      <div className="w-full flex items-center gap-2 sm:gap-4">
-                        <span className="flex items-center gap-2">
-                          <BriefcaseBusiness className="text-gray-400 w-5 h-5 sm:w-6 sm:h-6" />
-                          <h3 className="font-bold text-lg md:text-xl truncate">{job.title}</h3>
-                        </span>
+                      <div id="left" className="w-[92%] h-full ">
+                        <div className="w-full flex items-center gap-2 sm:gap-4">
+                          <span className="flex items-center gap-2">
+                            <BriefcaseBusiness className="text-gray-400 w-5 h-5 sm:w-6 sm:h-6" />
+                            <h3 className="font-bold text-lg md:text-xl truncate">{job.title}</h3>
+                          </span>
 
-                        <Badge variant="default" className="bg-[#6A38C2] hover:bg-[#5b30a6] truncate">{job.experienceLevel}</Badge>
+                          <Badge variant="default" className="bg-[#6A38C2] hover:bg-[#5b30a6] truncate">{job.experienceLevel}</Badge>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-gray-500 font-semibold truncate">{job.department} |  Salary: {job.salaryCurrency} {job.salaryOffered}</p>
+                          <p></p>
+                        </div>
+                        <div className="mt-3 flex items-center">
+                          {/* If the job is open, distinguish between an active and reached deadline. */}
+                          {job.isOpen && !isDeadlineReached ? (
+                            <Badge className="bg-green-200 text-green-800 hover:bg-green-100">
+                              Open
+                            </Badge>
+                          ) : job.isOpen && isDeadlineReached ? (
+                            <Badge className="bg-yellow-200 text-yellow-800 hover:bg-yellow-100">
+                              Deadline reached
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-200 text-red-800 hover:bg-red-100">
+                              Closed
+                            </Badge>
+                          )}
+                          <span className="ml-4 text-gray-600 font-semibold flex gap-2 truncate"><Users className="w-5 h-6 text-gray-400 " /> Applicants: {job.applicantsCount}</span>
+                        </div>
                       </div>
-                      <div className="mt-2">
-                        <p className="text-gray-500 font-semibold truncate">{job.department} |  Salary: {job.salaryCurrency} {job.salaryOffered}</p>
-                        <p></p>
+                      <div id="right" className=" flex-1 h-full flex justify-center items-center">
+                        <Link to={`/admin/dashboard/jobs/${job._id}`} ><SquarePen className="text-[#5b30a6] hover:text-[#b18af0] " /></Link>
                       </div>
-                      <div className="mt-3 flex items-center">
-                        <Badge className={job.isOpen ? "bg-green-200 text-green-800 hover:bg-green-100" : "bg-red-200 text-red-800 hover:bg-red-100"}>
-                          {job.isOpen ? "Open" : "Closed"}
-                        </Badge>
-                        <span className="ml-4 text-gray-600 font-semibold flex gap-2 truncate"><Users className="w-5 h-6 text-gray-400 " /> Applicants: {job.applicantsCount}</span>
-                      </div>
-
-
-
-
                     </div>
-                    <div id="right" className=" flex-1 h-full flex justify-center items-center">
-                      <Link to={`/admin/dashboard/jobs/${job._id}`} ><SquarePen className="text-[#5b30a6] hover:text-[#b18af0] " /></Link>
-                    </div>
-                  </div>
-
-
-                ))}
+                  );
+                })}
               </div>
 
 

@@ -206,8 +206,8 @@ const Jobs = () => {
                         <span className='flex gap-2 my-2'><History className="text-gray-600 w-5 h-5 sm:w-6 sm:h-6" /><p className="text-gray-500 font-semibold truncate">{job.createdAtRelative}</p></span>
                       </div>
                       <div className="mt-3 flex items-center">
-                        <Badge className={job.isOpen ? "bg-green-200 text-green-800 hover:bg-green-100" : "bg-red-200 text-red-800 hover:bg-red-100"}>
-                          {job.isOpen ? "Open" : "Closed"}
+                        <Badge className={job.isOpen && job.applicationDeadline > new Date() ? "bg-green-200 text-green-800 hover:bg-green-100" : "bg-red-200 text-red-800 hover:bg-red-100"}>
+                          {job.isOpen && job.applicationDeadline > new Date() ? "Open" : "Closed"}
                         </Badge>
                         <span className="ml-4 text-gray-600 font-semibold flex gap-2 truncate"><Users className="w-5 h-6 text-gray-400 " /> Applicants: {job.applicantsCount}</span>
                       </div>
