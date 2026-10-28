@@ -23,5 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Ignore frontend environment files
 .env
-.env*
+.env.*
+/frontend/.env
+/frontend/.env.*
+!/frontend/.env.example
